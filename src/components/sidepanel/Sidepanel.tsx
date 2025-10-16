@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import ChatAadi from "../icons/ChatAadi";
-import { Trash2, SidebarCloseIcon, SidebarOpenIcon, User2 } from "lucide-react";
+import { signOut, useSession } from 'next-auth/react';
+import { Trash2, SidebarCloseIcon, SidebarOpenIcon, User2, ChevronDown, LogOut } from "lucide-react";
 import Link from "next/link";
 import NewChat from "../icons/NewChat";
 import Search from "../icons/Search";
@@ -12,7 +12,6 @@ import Sora from "../icons/Sora";
 import NewProject from "../icons/NewProject";
 import clsx from "clsx";
 import { useChats } from "@/hooks/chat";
-import { mutate } from "swr";
 
 
 interface SidepanelProps {
@@ -24,8 +23,14 @@ export default function Sidepanel({ currentChatId }: SidepanelProps) {
     const pathname = usePathname();
     const [isClient, setIsClient] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
-    const { chats, error, isLoading } = useChats();
+    const { chats, error, isLoading, deleteChat } = useChats();
+    const { data: session } = useSession();
+
+    const handleLogout = async () => {
+        await signOut({ callbackUrl: '/login' });
+    };
 
     // Set isClient to true after component mounts (client-side only)
     useEffect(() => {
@@ -52,29 +57,19 @@ export default function Sidepanel({ currentChatId }: SidepanelProps) {
         setDeletingId(chatId);
         
         try {
-            const response = await fetch(`/api/chat/${chatId}`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete chat');
-            }
-
-            // Refresh the chat list
-            await mutate('/api/chat');
+            await deleteChat(chatId);
             
             // If the current chat is the one being deleted, redirect to home
             if (window.location.pathname.includes(chatId)) {
                 router.push('/');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error deleting chat:', error);
-            alert('Failed to delete chat. Please try again.');
+            alert(error.message || 'Failed to delete chat. Please try again.');
         } finally {
             setDeletingId(null);
         }
     };
-
 
     return (
         <div className={clsx("bg-gray-50 transition-all duration-150 flex flex-col box-border h-[100vh] overflow-scroll border-r border-gray-200",
@@ -82,12 +77,18 @@ export default function Sidepanel({ currentChatId }: SidepanelProps) {
         )}>
             <div className="sticky top-0 z-1 bg-gray-50">
                 <div className="flex justify-between p-4 group">
-                    <button className={clsx("cursor-pointer",
+                    <button className={clsx("cursor-pointer flex items-center justify-center",
                         {
                             'group-hover:hidden': collapsed
                         }
                     )}>
-                        <ChatAadi className="w-6 h-6 text-black dark:text-white" />
+                        <div className="w-12 h-12 relative">
+                            <img
+                                src="/chatAadi.png"
+                                alt="Chat Aadi"
+                                className="w-full h-full"
+                            />
+                        </div>
                     </button>
                     <button className={clsx("cursor-pointer",
                         {
@@ -189,19 +190,39 @@ export default function Sidepanel({ currentChatId }: SidepanelProps) {
                         <div className="rounded-[100%] w-7 h-7 bg-blue-400 text-white flex items-center justify-center flex-shrink-0">
                             <User2 className="w-4 h-4" />
                         </div>
-                        <div className={clsx("flex flex-col gap-.5 flex-shrink-0",
-                            {
-                                "hidden": collapsed
-                            }
-                        )}>
-                            <span className="text-sm"><a href="https://www.linkedin.com/in/aaditya-bachchu-chatterjee-0485933b/">A B Chatterjee</a></span>
-                            <span className="text-xs text-gray-500">Free</span>
+                        <div className={clsx("flex flex-col gap-.5 flex-shrink-0 relative", {
+                            "hidden": collapsed
+                        })}>
+                            <div 
+                                className="flex items-center gap-1 cursor-pointer group"
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            >
+                                <span className="text-sm text-gray-800 group-hover:text-gray-600">
+                                    {session?.user?.email || 'User'}
+                                </span>
+                                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                            </div>
+                            <div className="flex items-center gap-2 py-1">
+                                <span className="text-xs text-gray-500 semibold">Free</span>
+                                <button className="px-2 py-1 bg-white rounded-2xl border border-gray-300 outline-0 text-xs font-medium cursor-pointer">Upgrade</button>
+                            </div>
+                            {isDropdownOpen && (
+                                <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        Log out
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className={clsx("pr-2", {
                         "hidden": collapsed
                     })}>
-                        <button className="px-2 py-1 bg-white rounded-2xl border border-gray-300 outline-0 text-xs font-medium cursor-pointer">Upgrade</button>
+                        
                     </div>
                 </div>
             </div>

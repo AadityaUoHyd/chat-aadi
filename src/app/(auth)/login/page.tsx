@@ -1,67 +1,132 @@
 "use client";
 
-import { Phone } from "lucide-react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { signIn, useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 
 export default function Login() {
-    const {data:session, status} = useSession();
-    console.log(session);
-    if(status === "loading") return <p>Loading....</p>;
-    if(session?.user) return redirect("/");
-    return (
-        <div>
-            <header className="p-4 text-2xl font-bold">ChatAadi</header>
-            <div className="max-w-xs m-auto text-center mt-[4rem]">
-                <h1 className="text-3xl font-semibol">Log in or sign up</h1>
-                <p className="text-gray-500 mt-3 text-sm leading-5">You'll get smarter responses and can uploaded files, images and more.</p>
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
-                <div className="mt-7">
-                    <div>
-                        <form>
-                            <input className="border border-gray-300 p-3 w-full rounded-4xl placeholder:text-gray-400 outline-0" placeholder="Email address" />
-                            <button type="submit" className="rounded-4xl bg-black w-full p-3 text-white dark:bg-white dark:text-black my-7 cursor-pointer">Continue</button>
-                        </form>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                        <div className="flex-1 h-[1px] bg-gray-200"></div>
-                        <div className="px-1 font-bold text-xs text-gray-800">OR</div>
-                        <div className="flex-1 h-[1px] bg-gray-200"></div>
-                    </div>
-                    <div className="mt-7">
-                        <button className="auth-btns" onClick={()=>signIn("google")}>
-                            <Image src={'https://auth-cdn.oaistatic.com/assets/google-logo-NePEveMl.svg'} width={20} height={20} alt="Google Icon" />
-                            Continue with Google
-                        </button>
-                    </div>
-                    <div className="mt-3">
-                        <button className="auth-btns">
-                            <Image src={'https://auth-cdn.oaistatic.com/assets/microsoft-logo-BUXxQnXH.svg'} width={20} height={20} alt="Google Icon" />
-                            Continue with Microsoft Account
-                        </button>
-                    </div>
-                    <div className="mt-3">
-                        <button className="auth-btns">
-                            <Image src={'https://auth-cdn.oaistatic.com/assets/apple-logo-vertically-balanced-rwLdlt8P.svg'} width={20} height={20} alt="Google Icon" />
-                            Continue with Apple
-                        </button>
-                    </div>
-                    <div className="mt-3">
-                        <button className="auth-btns">
-                            <Phone width={20} height={20} />
-                            Continue with phone
-                        </button>
-                    </div>
-                </div>
+  if (status === "loading") return <p className="p-4">Loading...</p>;
+  if (session?.user) return redirect(callbackUrl);
 
-                <div className="mt-[4rem] flex justify-center items-center gap-2">
-                    <Link href="/" className="underline underline-offset-1 text-gray-600 text-sm">Terms of Use</Link>
-                    <div className="text-gray-600"> | </div>
-                    <Link href="/" className="underline underline-offset-1 text-gray-600 text-sm">Privacy Policy</Link>
-                </div>
-            </div>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError("Please enter both email and password");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+        callbackUrl,
+      });
+
+      if (result?.error) {
+        setError("Invalid email or password");
+      } else {
+        window.location.href = callbackUrl;
+      }
+    } catch (error) {
+      setError("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <header className="p-4 text-2xl font-bold">ChatAadi</header>
+      <div className="max-w-xs m-auto text-center mt-[4rem]">
+        <h1 className="text-3xl font-semibold">Log in or sign up</h1>
+        <p className="text-gray-500 mt-3 text-sm leading-5">
+          You'll get smarter responses and can upload files, images and more.
+        </p>
+
+        <div className="mt-7">
+          <div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="text-red-500 text-sm mb-2">{error}</div>
+              )}
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border border-gray-300 p-3 w-full rounded-lg placeholder:text-gray-400 outline-0"
+                placeholder="Email address"
+                required
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border border-gray-300 p-3 w-full rounded-lg placeholder:text-gray-400 outline-0 mt-2"
+                placeholder="Password"
+                required
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`rounded-lg bg-black w-full p-3 text-white dark:bg-white dark:text-black my-4 cursor-pointer ${
+                  isLoading ? "opacity-75" : ""
+                }`}
+              >
+                {isLoading ? "Signing in..." : "Continue"}
+              </button>
+            </form>
+          </div>
+
+          <div className="flex gap-2 items-center my-4">
+            <div className="flex-1 h-[1px] bg-gray-200"></div>
+            <div className="px-1 font-bold text-xs text-gray-800">OR</div>
+            <div className="flex-1 h-[1px] bg-gray-200"></div>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              className="auth-btns w-full"
+              onClick={() => signIn("google", { callbackUrl })}
+            >
+              <Image
+                src={
+                  "https://auth-cdn.oaistatic.com/assets/google-logo-NePEveMl.svg"
+                }
+                width={20}
+                height={20}
+                alt="Google Icon"
+              />
+              Continue with Google
+            </button>
+
+            
+          </div>
+
+          <p className="mt-6 text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link
+              href="/register"
+              className="text-blue-600 hover:underline"
+            >
+              Sign up
+            </Link>
+          </p>
         </div>
-    )
+      </div>
+    </div>
+  );
 }

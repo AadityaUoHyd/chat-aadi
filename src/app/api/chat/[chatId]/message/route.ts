@@ -170,6 +170,8 @@ Always respond in clean, well-structured **Markdown**.
 
 4. **Follow-up Questions**
    - Suggest 2–3 relevant follow-ups.
+   - Ask for confirmation if the user has not provided enough information.
+   - ensure "Follow-up Questions" header comes in bold letter and with one line verticle space.
 
 5. **Tone**
    - Friendly, natural, encourage curiosity.

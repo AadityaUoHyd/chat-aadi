@@ -1,7 +1,8 @@
 "use client";
 import ChatInput from "@/components/chatinput/chatinput";
 import { use } from "react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from "rehype-highlight";
 import 'highlight.js/styles/github.css';
@@ -12,10 +13,52 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
   const { chatId } = use(params);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [messages, setAllMessages] = useState<any[]>([]);
+  const router = useRouter();
 
-  const hasFetched = useRef(false); // Strict Mode guard
+  const hasFetched = useRef(false);
   const { startPollingChat } = useChats();
   const [autoScroll, setAutoScroll] = useState(true);
+  const pollingCleanupRef = useRef<(() => void) | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!chatId) {
+      setError('Chat ID is missing');
+      return;
+    }
+
+    const handlePollingError = (error: Error) => {
+      if (error.message === 'Chat not found') {
+        setError('This chat could not be found. It may have been deleted.');
+        // Redirect to chat list after a delay
+        setTimeout(() => router.push('/'), 2000);
+      } else {
+        setError('Failed to load chat. Please try again.');
+      }
+    };
+
+    try {
+      const cleanup = startPollingChat(chatId, handlePollingError);
+      if (typeof cleanup === 'function') {
+        pollingCleanupRef.current = cleanup;
+      }
+      
+      // Clear the interval when the component unmounts or chatId changes
+      return () => {
+        if (pollingCleanupRef.current) {
+          pollingCleanupRef.current();
+          pollingCleanupRef.current = null;
+        }
+      };
+    } catch (err) {
+      console.error('Error starting chat polling:', err);
+      setError('Failed to start chat polling. Please try again.');
+    }
+  }, [chatId, startPollingChat, router]);
+
+  if (error) {
+    return <div className="p-4 text-red-500">{error}</div>;
+  }
 
   const fetchChat = async () => {
     try {
@@ -25,14 +68,19 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
         const lastMessage = data[data.length - 1];
         if (lastMessage?.role === "user") sendPrompt(lastMessage.content);
         else {
-          setAllMessages(data)
+          setAllMessages(data);
         }
-        if(data.length === 1){
-          startPollingChat(chatId);
+        if (data.length === 1) {
+          // Clean up any existing polling
+          if (pollingCleanupRef.current) {
+            pollingCleanupRef.current();
+          }
+          // Start new polling and store cleanup function
+          pollingCleanupRef.current = startPollingChat(chatId);
         }
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching chat:', err);
     }
   };
 
@@ -96,6 +144,16 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
     }
   };
 
+  // Clean up polling on unmount or chatId change
+  useEffect(() => {
+    return () => {
+      if (pollingCleanupRef.current) {
+        pollingCleanupRef.current();
+        pollingCleanupRef.current = null;
+      }
+    };
+  }, [chatId]);
+
   useEffect(() => {
     if (!hasFetched.current) {
       hasFetched.current = true;
@@ -104,56 +162,65 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col overflow-scroll" ref={chatContainerRef}        onScroll={handleScroll}>
-      <div className="flex-1 flex flex-col gap-2 m-auto w-3xl pb-[10rem]" >
-        {messages.map(msg => (
-          <div
-            key={msg.id}
-            className={`group relative w-3xl py-2 px-3 m-2 rounded-xl ${msg.role === "user" ? "max-w-xl w-auto self-end bg-neutral-100" : "self-start"
+    <div className="flex-1 flex flex-col h-full">
+      <div className="flex-1 overflow-auto" ref={chatContainerRef} onScroll={handleScroll}>
+        <div className="flex-1 flex flex-col gap-2 m-auto w-3xl pb-[10rem]">
+          {messages.map(msg => (
+            <div
+              key={msg.id}
+              className={`group relative w-3xl py-2 px-3 m-2 rounded-xl ${
+                msg.role === "user" 
+                  ? "max-w-xl w-auto self-end bg-neutral-100" 
+                  : "self-start"
               }`}
-          >
-            {msg.role === 'assistant' && (
-              <div className="absolute right-2 -top-2">
-                <CopyButton content={msg.content} />
-              </div>
-            )}
-            <ReactMarkdown
-              children={msg.content}
-              rehypePlugins={[rehypeHighlight as any]}
-              className="prose break-words"
-              components={{
-                code({ node, inline, className, children, ...props }) {
-                  if (inline) {
-                    // Inline code
-                    return (
-                      <code className="bg-gray-200 text-gray-800 px-1 rounded">
-                        {children}
-                      </code>
-                    );
-                  }
+            >
+              {msg.role === 'assistant' && (
+                <div className="absolute right-2 -top-2">
+                  <CopyButton content={msg.content} />
+                </div>
+              )}
+              <ReactMarkdown
+                rehypePlugins={[rehypeHighlight as any]}
+                className="prose break-words"
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    if (inline) {
+                      // Inline code
+                      return (
+                        <code className="bg-gray-200 text-gray-800 px-1 rounded">
+                          {children}
+                        </code>
+                      );
+                    }
 
-                  // Block code
-                  return (
-                    <pre className=" text-white py-4 rounded-lg overflow-x-auto" >
-                      <code className={`${className} font-mono bg-dark`} {...props} style={{background: "#F4F4F5", color: "#000"}}>
-                        {children}
-                      </code>
-                    </pre>
-                  );
-                },
-                
-                
-              }}
-            />
-          </div>
-        ))}
-      </div>
-      <div className="sticky bottom-0 flex gap-2 w-full z-1 flex-col items-center bg-white">
-        
-        <div className="w-3xl">
-        <ChatInput sendPrompt={sendPrompt} />
+                    // Block code
+                    return (
+                      <pre className="text-white py-4 rounded-lg overflow-x-auto">
+                        <code 
+                          className={`${className} font-mono`} 
+                          style={{background: "#F4F4F5", color: "#000"}}
+                          {...props}
+                        >
+                          {children}
+                        </code>
+                      </pre>
+                    );
+                  },
+                }}
+              >
+                {msg.content}
+              </ReactMarkdown>
+            </div>
+          ))}
         </div>
-        <p className="bg-white mb-2 text-xs text-neutral-600">ChatAadi can make mistakes. Check important info. See Cookie Preferences.</p>
+      </div>
+      <div className="sticky bottom-0 flex gap-2 w-full z-1 flex-col items-center bg-white border-t">
+        <div className="w-3xl p-4">
+          <ChatInput sendPrompt={sendPrompt} />
+        </div>
+        <p className="bg-white mb-2 text-xs text-neutral-600">
+          ChatAadi can make mistakes. Check important info. See Cookie Preferences.
+        </p>
       </div>
     </div>
   );

@@ -1,18 +1,60 @@
+// src/middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getToken } from "next-auth/jwt";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  const token = await getToken({ req: request });
   
-  // List of valid routes
+  // Public routes that don't require authentication
+  const publicRoutes = [
+    '/login',
+    '/register',
+    '/api/auth',
+    '/_next',
+    '/favicon.ico',
+    '/api/health'
+  ];
+
+  // Check if current path is public
+  const isPublicRoute = publicRoutes.some(route => 
+    path === route || 
+    path.startsWith(`${route}/`) || 
+    path.startsWith('/_next/')
+  );
+
+  // Allow public routes to pass through
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
+  // Handle API routes
+  if (path.startsWith('/api/')) {
+    if (!token) {
+      return new NextResponse(
+        JSON.stringify({ message: 'Authentication required' }),
+        { status: 401, headers: { 'content-type': 'application/json' } }
+      );
+    }
+    return NextResponse.next();
+  }
+
+  // Handle protected routes
+  if (!token) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', path);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Valid application routes
   const validRoutes = [
     '/',
     '/c',
     '/c/[chatId]',
-    // Add other valid routes here
   ];
 
-  // Check if the current path is not in the valid routes
+  // Check if the current path is a valid route
   const isValidRoute = validRoutes.some(route => {
     if (route.includes('[')) {
       // Handle dynamic routes like /c/[chatId]
@@ -25,11 +67,11 @@ export function middleware(request: NextRequest) {
         return part.startsWith('[') || part === pathParts[index];
       });
     }
-    return path === route || path.startsWith(route + '/');
+    return path === route;
   });
 
+  // Redirect to home if route is not valid
   if (!isValidRoute) {
-    // Redirect to home for any other route
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -38,13 +80,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
