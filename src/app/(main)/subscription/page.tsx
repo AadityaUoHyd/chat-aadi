@@ -2,7 +2,7 @@ export default function SubscriptionPage() {
   const plans = [
     {
       name: 'Free',
-      price: '$0',
+      price: '₹0',
       period: 'forever',
       features: [
         'Basic access to ChatAadi',
@@ -15,7 +15,7 @@ export default function SubscriptionPage() {
     },
     {
       name: 'Pro',
-      price: '$10',
+      price: '₹1000',
       period: 'per month',
       popular: true,
       features: [
@@ -30,7 +30,7 @@ export default function SubscriptionPage() {
     },
     {
       name: 'Business',
-      price: '$25',
+      price: '₹2000',
       period: 'per month',
       features: [
         'Everything in Pro',

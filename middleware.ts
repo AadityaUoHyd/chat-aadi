@@ -13,36 +13,46 @@ export async function middleware(request: NextRequest) {
     '/api/auth',
     '/_next', 
     '/favicon.ico',
-    '/api/health'
+    '/api/health',
+    '/_vercel',
+    '/public',
+    '/(main)',
+    '/(main)/profile',
+    '/(main)/billing',
+    '/(main)/team',
+    '/(main)/subscription'
   ]
   
   // Check if the current path is public
-  const isPublicPath = publicPaths.some(path => 
-    pathname === path || 
-    pathname.startsWith(`${path}/`) || 
-    pathname.startsWith('/_next/')
-  )
+  const isPublicPath = publicPaths.some(path => {
+    if (path === '/_next') {
+      return pathname.startsWith('/_next')
+    }
+    if (path === '/api/auth') {
+      return pathname.startsWith('/api/auth')
+    }
+    return pathname === path || pathname.startsWith(`${path}/`)
+  })
 
   // If it's a public path, continue
   if (isPublicPath) {
     return NextResponse.next()
   }
 
-  // For API routes, return 401 if not authenticated
-  if (pathname.startsWith('/api/') && !token) {
-    return new NextResponse(
-      JSON.stringify({ message: 'Authentication required' }),
-      { status: 401, headers: { 'content-type': 'application/json' } }
-    )
-  }
-
-  // For non-API routes, redirect to login if not authenticated
-  if (!token && !isPublicPath) {
+  // Handle auth redirects for protected routes
+  if (!token) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
+  // Redirect authenticated users away from auth pages
+  const authPaths = ['/login', '/register']
+  if (authPaths.some(path => pathname === path || pathname.startsWith(`${path}/`))) {
+    return NextResponse.redirect(new URL('/(main)', request.url))
+  }
+
+  // Allow all other routes if authenticated
   return NextResponse.next()
 }
 

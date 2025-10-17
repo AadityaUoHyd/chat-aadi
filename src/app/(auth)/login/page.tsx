@@ -127,6 +127,10 @@ export default function Login() {
           </p>
         </div>
       </div>
+      <div className="flex justify-center mt-6">
+        <div className="mt-6 text-sm text-gray-600">Terms of use &nbsp; | &nbsp;</div>
+        <div className="mt-6 text-sm text-gray-600">Privacy</div>
+      </div>
     </div>
   );
 }

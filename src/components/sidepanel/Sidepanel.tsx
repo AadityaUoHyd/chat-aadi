@@ -208,7 +208,7 @@ export default function Sidepanel({ currentChatId }: SidepanelProps) {
 
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs font-medium text-gray-500">Free Plan</span>
-            <button 
+            <button   onClick={() => router.push('/subscription')}
               className="px-2.5 py-1 bg-white rounded-full border border-gray-200 text-xs font-medium 
                         hover:bg-gray-50 active:bg-gray-100 transition-colors shadow-sm"
             >

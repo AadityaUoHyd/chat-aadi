@@ -25,7 +25,7 @@ export default function ProfilePage() {
             <div className="space-y-2 text-gray-600">
               <p>Name: {session?.user?.name}</p>
               <p>Email: {session?.user?.email}</p>
-              <p>Member Since: January 2023</p>
+              <p>Member Since: {session?.user?.createdAt ? new Date(session.user.createdAt).toLocaleDateString() : 'N/A'}</p>
             </div>
           </div>
           <div>

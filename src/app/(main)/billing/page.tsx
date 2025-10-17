@@ -12,7 +12,7 @@ export default function BillingPage() {
               <h3 className="font-medium">Free Plan</h3>
               <p className="text-sm text-gray-600">Basic access with limited features</p>
             </div>
-            <button className="bg-[#5d5bd0] text-white px-4 py-2 rounded-md hover:bg-[#4a47a3] transition-colors">
+            <button className="bg-[#5d5bd0] text-white px-3 py-2 rounded-md hover:bg-[#4a47a3] transition-colors">
               Upgrade Plan
             </button>
           </div>
@@ -25,10 +25,10 @@ export default function BillingPage() {
               <div key={item} className="flex justify-between items-center p-3 border rounded-lg">
                 <div>
                   <p className="font-medium">Free Plan</p>
-                  <p className="text-sm text-gray-500">March 2023 - April 2023</p>
+                  <p className="text-sm text-gray-500">Aug 2025 - Sep 2025</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">$0.00</p>
+                  <p className="font-medium">₹0</p>
                   <p className="text-sm text-green-600">Paid</p>
                 </div>
               </div>

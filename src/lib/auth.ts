@@ -6,12 +6,37 @@ import { NextAuthOptions, User } from "next-auth";
 import { AdapterUser } from "next-auth/adapters";
 import bcrypt from "bcryptjs";
 
+
+const prismaAdapter = PrismaAdapter(prisma);
+prismaAdapter.getUserByEmail = async (email) => {
+  return prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      createdAt: true,
+    }
+  });
+};
+
 export const authOptions: NextAuthOptions = {
-    adapter: PrismaAdapter(prisma),
-    providers: [
+  adapter: prismaAdapter,
+  providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+
+            profile(profile) {
+    return {
+      id: profile.sub,
+      name: profile.name,
+      email: profile.email,
+      image: profile.picture,
+      // Add any other fields you want to include
+    }
+  }
         }),
         CredentialsProvider({
             name: 'credentials',
@@ -109,18 +134,46 @@ export const authOptions: NextAuthOptions = {
             }
             return true;
         },
-        async jwt({ token, user }) {
-            if (user) {
-                token.id = user.id;
+        async jwt({ token, user, isNewUser }) {
+    if (user) {
+        token.id = user.id;
+        try {
+            const dbUser = await prisma.user.findUnique({
+                where: { id: user.id },
+                select: { id: true, name: true, email: true, image: true, createdAt: true }
+            });
+            if (dbUser?.createdAt) {
+                token.createdAt = dbUser.createdAt;
+            } else if (isNewUser) {
+                token.createdAt = new Date();
             }
-            return token;
-        },
+        } catch (error) {
+            console.error('Error in JWT callback:', error);
+        }
+    }
+    return token;
+},
         async session({ session, token }) {
-            if (token && session.user) {
-                session.user.id = token.id as string;
+    if (token?.id) {
+        session.user.id = token.id as string;
+        if (token.createdAt) {
+            session.user.createdAt = token.createdAt;
+        } else {
+            try {
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: token.id as string },
+                    select: { createdAt: true }
+                });
+                if (dbUser?.createdAt) {
+                    session.user.createdAt = dbUser.createdAt;
+                }
+            } catch (error) {
+                console.error('Error fetching user in session callback:', error);
             }
-            return session;
-        },
+        }
+    }
+    return session;
+}
     },
     pages: {
         signIn: '/login',
