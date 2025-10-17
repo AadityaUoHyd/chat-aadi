@@ -1,4 +1,22 @@
+// app/subscription/page.tsx or components/SubscriptionPage.tsx
+
+'use client';
+
+import { useState } from 'react';
+import { CheckCircle } from 'lucide-react';
+
 export default function SubscriptionPage() {
+  const [selectedModel, setSelectedModel] = useState('mistral-tiny');
+
+  const modelBasedPrices: Record<string, { Pro: number; Business: number }> = {
+    'mistral-tiny': { Pro: 500, Business: 1200 },
+    'qwen-7b': { Pro: 700, Business: 1400 },
+    'GPT-4': { Pro: 1000, Business: 2000 },
+    'llama3.2': { Pro: 600, Business: 1300 },
+    'claude-3-5-sonnet': { Pro: 900, Business: 1800 },
+    'gemini-2.0-flash': { Pro: 800, Business: 1600 },
+  };
+
   const plans = [
     {
       name: 'Free',
@@ -7,15 +25,14 @@ export default function SubscriptionPage() {
       features: [
         'Basic access to ChatAadi',
         'Limited message history',
-        'Standard response time',
-        'Community support',
+        'Access to open models',
       ],
       buttonText: 'Your Current Plan',
       buttonVariant: 'outline',
     },
     {
       name: 'Pro',
-      price: '₹1000',
+      price: `₹${modelBasedPrices[selectedModel]?.Pro || 1000}`,
       period: 'per month',
       popular: true,
       features: [
@@ -30,7 +47,7 @@ export default function SubscriptionPage() {
     },
     {
       name: 'Business',
-      price: '₹2000',
+      price: `₹${modelBasedPrices[selectedModel]?.Business || 2000}`,
       period: 'per month',
       features: [
         'Everything in Pro',
@@ -79,15 +96,18 @@ export default function SubscriptionPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      {/* Header */}
       <div className="text-center mb-16">
-        <h1 className="text-4xl font-extrabold mb-4 text-gray-800">
-          Choose the Perfect Plan
-        </h1>
+        <h1 className="text-4xl font-extrabold mb-4 text-gray-800">Choose the Perfect Plan</h1>
         <p className="text-gray-600 max-w-xl mx-auto text-lg">
           Start for free, scale as you grow. No hidden fees, cancel anytime.
         </p>
+        <p className="mt-4 text-sm text-gray-500">
+          Selected Model: <strong>{selectedModel}</strong>
+        </p>
       </div>
 
+      {/* Plans */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
         {plans.map((plan, index) => (
           <div
@@ -119,14 +139,7 @@ export default function SubscriptionPage() {
             <ul className="space-y-4 mb-10 text-gray-700">
               {plan.features.map((feature, i) => (
                 <li key={i} className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-green-500 mr-2 mt-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-1" />
                   <span>{feature}</span>
                 </li>
               ))}
@@ -145,6 +158,7 @@ export default function SubscriptionPage() {
         ))}
       </div>
 
+      {/* FAQ Section */}
       <div className="mt-20 bg-gray-50 p-8 rounded-2xl shadow-sm">
         <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
           Frequently Asked Questions

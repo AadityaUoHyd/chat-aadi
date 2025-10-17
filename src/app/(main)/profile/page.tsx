@@ -3,7 +3,10 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { User2 } from 'lucide-react';
+import { Settings, User2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation'; 
+
 
 
 // Dynamically import the Header component with SSR disabled
@@ -22,11 +25,11 @@ interface UserSession {
 // Format date function to ensure consistent formatting
 const formatDate = (dateString: string | Date | null | undefined): string => {
   if (!dateString) return 'N/A';
-  
+
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return 'N/A';
-    
+
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -44,6 +47,8 @@ export default function ProfilePage() {
   const [memberSince, setMemberSince] = useState<string>('Loading...');
   const isLoading = status === 'loading';
   const [imageError, setImageError] = useState(false);
+  const router = useRouter();
+
 
   // Set isClient to true after component mounts
   useEffect(() => {
@@ -56,7 +61,7 @@ export default function ProfilePage() {
       setMemberSince('N/A');
       return;
     }
-    
+
     const user = session.user;
     setMemberSince(formatDate(user.createdAt as string) || 'New member');
   }, [session, status]);
@@ -86,24 +91,33 @@ export default function ProfilePage() {
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center space-x-4 mb-6">
           <div className="h-20 w-20 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
-  {!imageError && session.user.image ? (
-    <img
-      src={session.user.image}
-      alt={session.user.name || 'User'}
-      className="h-full w-full object-cover"
-      onError={() => setImageError(true)}
-    />
-  ) : (
-    <User2 className="shrink-0 w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center text-white shadow-sm" />
-  )}
+            {!imageError && session.user.image ? (
+              <img
+                src={session.user.image}
+                alt={session.user.name || 'User'}
+                className="h-full w-full object-cover"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <User2 className="shrink-0 w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center text-white shadow-sm" />
+            )}
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+          <div >
+  <h2 className="text-xl font-semibold">{session.user.name || 'User'}</h2>
+  <p className="text-gray-500">{session.user.email || 'No email provided'}</p>
 </div>
 
-          <div>
-            <h2 className="text-xl font-semibold">{session.user.name || 'User'}</h2>
-            <p className="text-gray-500">{session.user.email || 'No email provided'}</p>
+          <div >
+            <Button variant="outline" className="text-[#5d5bd0] border-0 bg-[#f1f1fb] hover:text-[#5d5bd0] hover:bg-[#f1f1fb] cursor-pointer"
+              onClick={() => router.push('/settings')}>
+              <Settings />Settings
+            </Button>
+          </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h3 className="font-medium mb-2">Personal Information</h3>
@@ -123,6 +137,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

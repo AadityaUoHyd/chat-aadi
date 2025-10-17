@@ -6,6 +6,20 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from "rehype-highlight";
 import 'highlight.js/styles/github.css';
+import hljs from 'highlight.js';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import json from 'highlight.js/lib/languages/json';
+import bash from 'highlight.js/lib/languages/bash';
+import markdown from 'highlight.js/lib/languages/markdown';
+
+// Register languages
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('markdown', markdown);
+hljs.registerLanguage('mark', markdown); // Alias 'mark' to 'markdown'
 import { useChats } from "@/hooks/chat";
 import { CopyButton } from "@/components/CopyButton";
 

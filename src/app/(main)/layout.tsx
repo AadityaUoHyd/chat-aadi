@@ -1,8 +1,8 @@
+// app/(main)/layout.tsx
 "use client";
 
 import Header from "@/components/header/Header";
 import Sidepanel from "@/components/sidepanel/Sidepanel";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -11,16 +11,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const currentChatId = isChatPage ? pathname.split("/")[2] : undefined;
 
   return (
-    <SidebarProvider className="min-h-screen flex">
-      <div>
-        <Sidepanel currentChatId={currentChatId} />
+    <div className="flex h-screen overflow-hidden">
+      <Sidepanel currentChatId={currentChatId} />
+      <div className="flex-1 flex flex-col min-h-0">
+        <Header />
+        <main className="flex-1 overflow-auto">
+          <div className="h-full">
+            {children}
+          </div>
+        </main>
       </div>
-      <div className="flex-1 flex flex-col h-[100vh]">
-        <div>
-          <Header />
-        </div>
-          {children}
-      </div>
-    </SidebarProvider>
+    </div>
   );
 }

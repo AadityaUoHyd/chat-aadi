@@ -42,6 +42,7 @@ export async function middleware(request: NextRequest) {
     '/(main)',
     '/(main)/about',
     '/(main)/profile',
+    '/(main)/settings',
     '/(main)/billing',
     '/(main)/team',
     '/(main)/subscription'
