@@ -17,7 +17,7 @@ async function getAIProvider(): Promise<AIProvider> {
   if (process.env.DISABLE_OLLAMA !== 'true') {
     try {
       // Test if Ollama is available
-      const response = await fetch('http://localhost:11434/api/tags', { 
+      const response = await fetch(process.env.OLLAMA_URL || 'http://localhost:11434/api/tags', { 
         method: 'GET',
         // Add a short timeout to prevent hanging
         signal: AbortSignal.timeout(1000) 
@@ -105,7 +105,7 @@ async function createChatCompletion(messages: any[], options: any = {}) {
 // ------------------ GET Messages ------------------
 export async function GET(
   req: NextRequest,
-  { params }: { params: { chatId: string } }
+  context: { params: Promise<{ chatId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -113,7 +113,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { chatId } = await params;
+    const { chatId } = await context.params;
     const allMessages = await prisma.message.findMany({
       where: { chatId, chat: { userId: session.user.id } },
       orderBy: { createdAt: "asc" },
@@ -129,13 +129,13 @@ export async function GET(
 // ------------------ POST Messages / AI Response ------------------
 export async function POST(
   req: NextRequest,
-  { params }: { params: { chatId: string } }
+  context: { params: Promise<{ chatId: string }> }
 ) {
   try {
     const session: any = await getServerSession(authOptions);
     if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
-    let { chatId } = await params;
+    let { chatId } = await context.params;
     const { userPrompt } = await req.json();
     if (!userPrompt) return new Response("No prompt provided", { status: 400 });
 

@@ -7,23 +7,35 @@ import { AdapterUser } from "next-auth/adapters";
 import bcrypt from "bcryptjs";
 
 
+// Initialize the Prisma adapter
 const prismaAdapter = PrismaAdapter(prisma);
+// Extend the adapter to include custom user lookup by email
 prismaAdapter.getUserByEmail = async (email) => {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-      createdAt: true,
+    include: {
+      accounts: true,
+      sessions: true
     }
   });
+  
+  if (!user) return null;
+  
+  // Convert to AdapterUser type with proper date formatting
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email || '', // Ensure email is not null
+    emailVerified: user.emailVerified,
+    image: user.image,
+    createdAt: user.createdAt.toISOString(), // Convert Date to ISO string
+    updatedAt: user.updatedAt?.toISOString() || null, // Convert Date to ISO string or null
+  } as AdapterUser;
 };
 
 export const authOptions: NextAuthOptions = {
-  adapter: prismaAdapter,
-  providers: [
+    adapter: prismaAdapter,
+    providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -134,46 +146,64 @@ export const authOptions: NextAuthOptions = {
             }
             return true;
         },
-        async jwt({ token, user, isNewUser }) {
-    if (user) {
-        token.id = user.id;
-        try {
-            const dbUser = await prisma.user.findUnique({
-                where: { id: user.id },
-                select: { id: true, name: true, email: true, image: true, createdAt: true }
-            });
-            if (dbUser?.createdAt) {
-                token.createdAt = dbUser.createdAt;
-            } else if (isNewUser) {
-                token.createdAt = new Date();
+        async jwt({ token, user, account, profile, isNewUser }) {
+            // Initial sign in
+            if (user) {
+                try {
+                    // Get the full user data including createdAt
+                    const dbUser = await prisma.user.findUnique({
+                        where: { id: user.id },
+                        select: {
+                            id: true,
+                            email: true,
+                            name: true,
+                            image: true,
+                            createdAt: true
+                        }
+                    });
+
+                    if (dbUser) {
+                        return {
+                            ...token,
+                            id: dbUser.id,
+                            email: dbUser.email,
+                            name: dbUser.name,
+                            picture: dbUser.image,
+                            createdAt: dbUser.createdAt ? new Date(dbUser.createdAt).toISOString() : new Date().toISOString()
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error in JWT callback:', error);
+                }
             }
-        } catch (error) {
-            console.error('Error in JWT callback:', error);
-        }
-    }
-    return token;
-},
+            
+            return token;
+        },
         async session({ session, token }) {
-    if (token?.id) {
-        session.user.id = token.id as string;
-        if (token.createdAt) {
-            session.user.createdAt = token.createdAt;
-        } else {
-            try {
+            if (token) {
+                // Get the user from the database to ensure we have the latest data
                 const dbUser = await prisma.user.findUnique({
                     where: { id: token.id as string },
-                    select: { createdAt: true }
+                    select: {
+                        id: true,
+                        email: true,
+                        name: true,
+                        image: true,
+                        createdAt: true
+                    }
                 });
-                if (dbUser?.createdAt) {
-                    session.user.createdAt = dbUser.createdAt;
-                }
-            } catch (error) {
-                console.error('Error fetching user in session callback:', error);
+
+                session.user = {
+                    ...session.user,
+                    id: token.id as string,
+                    name: token.name as string,
+                    email: token.email as string,
+                    image: token.picture as string,
+                    createdAt: dbUser?.createdAt ? new Date(dbUser.createdAt).toISOString() : new Date().toISOString()
+                };
             }
+            return session;
         }
-    }
-    return session;
-}
     },
     pages: {
         signIn: '/login',

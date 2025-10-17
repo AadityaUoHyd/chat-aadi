@@ -1,85 +1,78 @@
-// src/middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { getToken } from "next-auth/jwt";
+import { getToken } from "next-auth/jwt"
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-  const token = await getToken({ req: request });
-  
-  // Public routes that don't require authentication
-  const publicRoutes = [
+  const origin = request.headers.get('origin') || ''
+  const allowedOrigins = process.env.NEXT_PUBLIC_ALLOWED_ORIGINS?.split(',') || []
+
+  const response = NextResponse.next()
+
+  // Handle dynamic CORS
+  if (allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin)
+  }
+  response.headers.set('Access-Control-Allow-Credentials', 'true')
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  response.headers.set(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  )
+
+  // Preflight request (OPTIONS)
+  if (request.method === 'OPTIONS') {
+    return response
+  }
+
+  // 🔐 Auth checks (same as you already have)
+  const token = await getToken({ req: request })
+  const { pathname } = request.nextUrl
+
+  const publicPaths = [
     '/login',
     '/register',
+    '/terms',
+    '/privacy',
     '/api/auth',
     '/_next',
     '/favicon.ico',
-    '/api/health'
-  ];
+    '/api/health',
+    '/_vercel',
+    '/public',
+    '/(main)',
+    '/(main)/about',
+    '/(main)/profile',
+    '/(main)/billing',
+    '/(main)/team',
+    '/(main)/subscription'
+  ]
 
-  // Check if current path is public
-  const isPublicRoute = publicRoutes.some(route => 
-    path === route || 
-    path.startsWith(`${route}/`) || 
-    path.startsWith('/_next/')
-  );
+  const isPublicPath = publicPaths.some(path => {
+    if (path === '/_next') return pathname.startsWith('/_next')
+    if (path === '/api/auth') return pathname.startsWith('/api/auth')
+    return pathname === path || pathname.startsWith(`${path}/`)
+  })
 
-  // Allow public routes to pass through
-  if (isPublicRoute) {
-    return NextResponse.next();
+  if (isPublicPath) {
+    return response
   }
 
-  // Handle API routes
-  if (path.startsWith('/api/')) {
-    if (!token) {
-      return new NextResponse(
-        JSON.stringify({ message: 'Authentication required' }),
-        { status: 401, headers: { 'content-type': 'application/json' } }
-      );
-    }
-    return NextResponse.next();
-  }
-
-  // Handle protected routes
   if (!token) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', path);
-    return NextResponse.redirect(loginUrl);
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('callbackUrl', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
-  // Valid application routes
-  const validRoutes = [
-    '/',
-    '/c',
-    '/c/[chatId]',
-  ];
-
-  // Check if the current path is a valid route
-  const isValidRoute = validRoutes.some(route => {
-    if (route.includes('[')) {
-      // Handle dynamic routes like /c/[chatId]
-      const routeParts = route.split('/');
-      const pathParts = path.split('/');
-      
-      if (routeParts.length !== pathParts.length) return false;
-      
-      return routeParts.every((part, index) => {
-        return part.startsWith('[') || part === pathParts[index];
-      });
-    }
-    return path === route;
-  });
-
-  // Redirect to home if route is not valid
-  if (!isValidRoute) {
-    return NextResponse.redirect(new URL('/', request.url));
+  const authPaths = ['/login', '/register']
+  if (authPaths.some(path => pathname === path || pathname.startsWith(`${path}/`))) {
+    return NextResponse.redirect(new URL('/(main)', request.url))
   }
 
-  return NextResponse.next();
+  return response
 }
 
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
-};
+}

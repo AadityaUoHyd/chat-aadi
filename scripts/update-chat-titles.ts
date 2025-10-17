@@ -12,7 +12,7 @@ async function updateChatTitles() {
       ]
     },
     include: {
-      message: {
+      messages: {
         where: { role: 'user' },
         orderBy: { createdAt: 'asc' },
         take: 1,
@@ -23,7 +23,7 @@ async function updateChatTitles() {
 
   // Update each chat with a title based on the first message
   for (const chat of chats) {
-    const firstMessage = chat.message[0]?.content || 'New Chat';
+    const firstMessage = chat.messages[0]?.content || 'New Chat';
     const title = firstMessage.substring(0, 50) + (firstMessage.length > 50 ? '...' : '');
     
     await prisma.chat.update({

@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { signIn, useSession } from "next-auth/react";
 import { redirect, useSearchParams } from "next/navigation";
 
-export default function Login() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -52,11 +52,11 @@ export default function Login() {
     <div>
       <div className="max-w-xs m-auto text-center m-4">
         <div className="flex justify-center">
-                            <img
-                                src="https://raw.githubusercontent.com/AadityaUoHyd/chat-aadi/refs/heads/main/screenshots/chatAadi.png"
-                                alt="Chat Aadi"
-                                className="w-full h-full"
-                            />
+          <img
+            src="https://raw.githubusercontent.com/AadityaUoHyd/chat-aadi/refs/heads/main/screenshots/chatAadi.png"
+            alt="Chat Aadi"
+            className="w-full h-full"
+          />
         </div>
         <h1 className="text-3xl font-semibold">Log in or sign up</h1>
         <p className="text-gray-500 mt-3 text-sm leading-5">
@@ -109,25 +109,18 @@ export default function Login() {
               onClick={() => signIn("google", { callbackUrl })}
             >
               <Image
-                src={
-                  "https://auth-cdn.oaistatic.com/assets/google-logo-NePEveMl.svg"
-                }
+                src={"https://auth-cdn.oaistatic.com/assets/google-logo-NePEveMl.svg"}
                 width={20}
                 height={20}
                 alt="Google Icon"
               />
               Continue with Google
             </button>
-
-            
           </div>
 
           <p className="mt-6 text-sm text-gray-600">
-            Don't have an account?{" "}
-            <Link
-              href="/register"
-              className="text-blue-600 hover:underline"
-            >
+            Do not have an account?{" "}
+            <Link href="/register" className="text-blue-600 hover:underline">
               Sign up
             </Link>
           </p>
@@ -143,5 +136,13 @@ export default function Login() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

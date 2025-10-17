@@ -56,34 +56,33 @@ model Session {
 model Chat{
   id          String @id @default(cuid())
   userId      String
-  user        User   @relation(fields: [userId], references: [id])
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title       String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  message Message[]
-  tokenUsage TokenUsage[]
+  messages    Message[] @relation("ChatMessages")
+  tokenUsage  TokenUsage[] @relation("ChatTokenUsage")
 
   @@index([userId])
 }
 
 model Message {
-  id    String   @id  @default(cuid())
-  chatId String
-  chat  Chat   @relation(fields: [chatId], references: [id])
-  role  String
-  content String  @db.Text
+  id        String   @id @default(cuid())
+  chatId    String
+  chat      Chat     @relation("ChatMessages", fields: [chatId], references: [id], onDelete: Cascade)
+  role      String
+  content   String   @db.Text
   createdAt DateTime @default(now())
 }
 
 model TokenUsage {
-  id   String   @id @default(cuid())
-  userId String
-  user User @relation(fields: [userId], references: [id])
-
-  chatId  String
-  chat Chat @relation(fields: [chatId], references: [id])
-  token Int @default(0)
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatId    String
+  chat      Chat     @relation("ChatTokenUsage", fields: [chatId], references: [id], onDelete: Cascade)
+  token     Int      @default(0)
   createdAt DateTime @default(now())
 }

@@ -60,6 +60,9 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 NEXTAUTH_SECRET=your_random_secret
 NEXTAUTH_URL=http://localhost:3000
 
+# CORS
+NEXT_PUBLIC_ALLOWED_ORIGINS=http://localhost:3000,https://chat-aadi.vercel.app
+
 #AI Providers
 #OLLAMA (localhost provider as default)
 OLLAMA_URL=http://localhost:11434/api/generate
@@ -218,5 +221,11 @@ This project is licensed under the [MIT License](./LICENSE).
 ---
 
 ### Vercel Deployment
+- Enusre next.config.ts has 
+```
+{ key: 'Access-Control-Allow-Origin', value: 'https://chat-aadi.vercel.app' }, 
+and not http://localhost:3000
+
+```
 - In case it got deployed, find it live here:
 - https://chat-aadi.vercel.app

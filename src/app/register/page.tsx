@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,13 +73,13 @@ export default function RegisterPage() {
   return (
     <div>
       <div className="max-w-xs m-auto text-center m-4">
-          <div className="flex justify-center">
-                            <img
-                                src="https://raw.githubusercontent.com/AadityaUoHyd/chat-aadi/refs/heads/main/screenshots/chatAadi.png"
-                                alt="Chat Aadi"
-                                className="w-full h-full"
-                            />
-          </div>
+        <div className="flex justify-center">
+          <img
+            src="https://raw.githubusercontent.com/AadityaUoHyd/chat-aadi/refs/heads/main/screenshots/chatAadi.png"
+            alt="Chat Aadi"
+            className="w-full h-full"
+          />
+        </div>
         <h1 className="text-3xl font-semibold">Create an account</h1>
         <p className="text-gray-500 mt-3 text-sm leading-5">
           Join our community to get started
@@ -149,8 +149,12 @@ export default function RegisterPage() {
               className="w-full flex items-center justify-center gap-2 p-2 border rounded-md hover:bg-gray-50"
               disabled={isLoading}
             >
-              <Image src={"https://auth-cdn.oaistatic.com/assets/google-logo-NePEveMl.svg"}
-                  width={20} height={20} alt="Google Icon" />
+              <Image 
+                src={"https://auth-cdn.oaistatic.com/assets/google-logo-NePEveMl.svg"}
+                width={20} 
+                height={20} 
+                alt="Google Icon" 
+              />
               <span>Continue with Google</span>
             </button>
 
@@ -176,5 +180,13 @@ export default function RegisterPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="p-4">Loading...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

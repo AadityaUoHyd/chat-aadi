@@ -2,12 +2,14 @@
 
 import { SessionProvider } from 'next-auth/react';
 
-export function AuthProvider({ 
+import { Session } from 'next-auth';
+
+export function AuthProvider({
   children,
-  session
-}: { 
+  session,
+}: {
   children: React.ReactNode;
-  session: any;
+  session: Session | null;
 }) {
   return (
     <SessionProvider session={session}>

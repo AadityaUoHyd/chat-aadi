@@ -3,17 +3,39 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const origin = request.headers.get('origin') || ''
+  const allowedOrigins = process.env.NEXT_PUBLIC_ALLOWED_ORIGINS?.split(',') || []
+
+
+  const response = NextResponse.next()
+
+  // Handle dynamic CORS
+  if (allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin)
+  }
+  response.headers.set('Access-Control-Allow-Credentials', 'true')
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  response.headers.set(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  )
+
+  // Preflight request (OPTIONS)
+  if (request.method === 'OPTIONS') {
+    return response
+  }
+
+  // 🔐 Auth checks (same as you already have)
   const token = await getToken({ req: request })
   const { pathname } = request.nextUrl
 
-  // Define public routes that don't require authentication
   const publicPaths = [
-    '/login', 
+    '/login',
     '/register',
     '/terms',
     '/privacy',
     '/api/auth',
-    '/_next', 
+    '/_next',
     '/favicon.ico',
     '/api/health',
     '/_vercel',
@@ -24,38 +46,29 @@ export async function middleware(request: NextRequest) {
     '/(main)/team',
     '/(main)/subscription'
   ]
-  
-  // Check if the current path is public
+
   const isPublicPath = publicPaths.some(path => {
-    if (path === '/_next') {
-      return pathname.startsWith('/_next')
-    }
-    if (path === '/api/auth') {
-      return pathname.startsWith('/api/auth')
-    }
+    if (path === '/_next') return pathname.startsWith('/_next')
+    if (path === '/api/auth') return pathname.startsWith('/api/auth')
     return pathname === path || pathname.startsWith(`${path}/`)
   })
 
-  // If it's a public path, continue
   if (isPublicPath) {
-    return NextResponse.next()
+    return response
   }
 
-  // Handle auth redirects for protected routes
   if (!token) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // Redirect authenticated users away from auth pages
   const authPaths = ['/login', '/register']
   if (authPaths.some(path => pathname === path || pathname.startsWith(`${path}/`))) {
     return NextResponse.redirect(new URL('/(main)', request.url))
   }
 
-  // Allow all other routes if authenticated
-  return NextResponse.next()
+  return response
 }
 
 export const config = {

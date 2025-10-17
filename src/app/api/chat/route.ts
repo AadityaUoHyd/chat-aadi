@@ -16,7 +16,7 @@ export async function GET(){
                 userId: session.user.id
             },
             include: {
-                message: {
+                messages: {
                     where: { role: 'user' },
                     orderBy: { createdAt: 'asc' },
                     take: 1,
@@ -30,9 +30,16 @@ export async function GET(){
             }
         });
 
-        const chatsWithMessageTitles = allChats.map(chat => ({
+        const chatsWithMessageTitles = allChats.map((chat: {
+            id: string;
+            userId: string;
+            title: string;
+            createdAt: Date;
+            updatedAt: Date;
+            messages: Array<{ content: string }>;
+        }) => ({
             ...chat,
-            title: chat.message[0]?.content?.substring(0, 30) + (chat.message[0]?.content?.length > 30 ? '...' : '') || 'New Chat'
+            title: chat.messages[0]?.content?.substring(0, 30) + (chat.messages[0]?.content?.length > 30 ? '...' : '') || 'New Chat'
         }));
 
         return NextResponse.json(chatsWithMessageTitles, {status: 200});
