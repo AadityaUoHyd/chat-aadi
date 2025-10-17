@@ -51,7 +51,14 @@ export default function Login() {
   return (
     <div>
       <header className="p-4 text-2xl font-bold">ChatAadi</header>
-      <div className="max-w-xs m-auto text-center mt-[4rem]">
+      <div className="max-w-xs m-auto text-center mt-8">
+        <div className="flex justify-center mb-6">
+                            <img
+                                src="/chatAadi.png"
+                                alt="Chat Aadi"
+                                className="w-full h-full"
+                            />
+        </div>
         <h1 className="text-3xl font-semibold">Log in or sign up</h1>
         <p className="text-gray-500 mt-3 text-sm leading-5">
           You'll get smarter responses and can upload files, images and more.

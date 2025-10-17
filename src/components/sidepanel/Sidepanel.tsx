@@ -8,7 +8,7 @@ import Link from "next/link";
 import NewChat from "../icons/NewChat";
 import Search from "../icons/Search";
 import Library from "../icons/Library";
-import Sora from "../icons/Sora";
+import ImageGenerator from "../icons/ImageGenerator";
 import NewProject from "../icons/NewProject";
 import clsx from "clsx";
 import { useChats } from "@/hooks/chat";
@@ -130,7 +130,7 @@ export default function Sidepanel({ currentChatId }: SidepanelProps) {
             })}>
                 <div className={`my-6 mx-2`}>
                     <Link href="/" className="px-2 rounded-sm flex gap-3 py-2 text-md w-full hover:bg-gray-200">
-                        <Sora className="text-black w-6 h-6" />
+                        <ImageGenerator className="text-black w-6 h-6" />
                         Media Generator
                     </Link>
                 </div>

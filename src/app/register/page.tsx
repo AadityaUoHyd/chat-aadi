@@ -73,7 +73,14 @@ export default function RegisterPage() {
   return (
     <div>
       <header className="p-4 text-2xl font-bold">ChatAadi</header>
-      <div className="max-w-xs m-auto text-center mt-[4rem]">
+      <div className="max-w-xs m-auto text-center mt-8">
+          <div className="flex justify-center mb-6">
+                            <img
+                                src="/chatAadi.png"
+                                alt="Chat Aadi"
+                                className="w-full h-full"
+                            />
+          </div>
         <h1 className="text-3xl font-semibold">Create an account</h1>
         <p className="text-gray-500 mt-3 text-sm leading-5">
           Join our community to get started
