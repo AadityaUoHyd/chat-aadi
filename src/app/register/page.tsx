@@ -160,6 +160,15 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+      <div className="flex justify-center gap-4 mt-6">
+        <Link href="/terms" className="text-sm text-gray-600 hover:underline">
+          Terms of Use
+        </Link>
+        <span className="text-sm text-gray-400">|</span>
+        <Link href="/privacy" className="text-sm text-gray-600 hover:underline">
+          Privacy Policy
+        </Link>
+      </div>
     </div>
   );
 }

@@ -127,9 +127,14 @@ export default function Login() {
           </p>
         </div>
       </div>
-      <div className="flex justify-center mt-6">
-        <div className="mt-6 text-sm text-gray-600">Terms of use &nbsp; | &nbsp;</div>
-        <div className="mt-6 text-sm text-gray-600">Privacy</div>
+      <div className="flex justify-center gap-4 mt-6">
+        <Link href="/terms" className="text-sm text-gray-600 hover:underline">
+          Terms of Use
+        </Link>
+        <span className="text-sm text-gray-400">|</span>
+        <Link href="/privacy" className="text-sm text-gray-600 hover:underline">
+          Privacy Policy
+        </Link>
       </div>
     </div>
   );
