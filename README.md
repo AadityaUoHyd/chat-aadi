@@ -59,6 +59,18 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 # NextAuth
 NEXTAUTH_SECRET=your_random_secret
 NEXTAUTH_URL=http://localhost:3000
+
+#AI Providers
+#OLLAMA (localhost provider as default)
+OLLAMA_URL=http://localhost:11434/api/generate
+OLLAMA_MODEL=llama3.2
+DISABLE_OLLAMA=false  # Set to true to force using Mistral
+
+
+#Mistral (fallback provider, will be used in live deploy)
+MISTRAL_API_KEY=your_mistral_api_key
+MISTRAL_API_URL=https://api.laplateforme.io/mistral/v1
+MISTRAL_MODEL=mistral-tiny
 ```
 
 > 🔐 You can generate `NEXTAUTH_SECRET` using:
