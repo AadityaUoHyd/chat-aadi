@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({chatId: newChat.id}, {status: 200})
 
   } catch(error) {
-    console.log(error);
+    console.error(error);
     return Response.json({error: "Something went wrong!"}, { status: 500 })
   }
 }

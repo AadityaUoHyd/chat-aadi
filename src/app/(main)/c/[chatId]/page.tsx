@@ -119,8 +119,6 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
       }
     } catch (err) {
       console.error("Error streaming assistant:", err);
-    } finally {
-      console.log("Completed!");
     }
   };
 

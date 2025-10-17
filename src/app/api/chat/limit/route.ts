@@ -9,14 +9,13 @@ export async function GET(){
         if(!session?.user.id){
             return NextResponse.json({error: "Unauthorized"}, {status:401})
         }
-        console.log("Calling api", session.user.id)
         const countDailyToken = await getTodayTokens(session.user.id);
 
         return NextResponse.json({token: countDailyToken}, {status: 200});
 
 
     }catch(error){
-        console.log("error", error);
+        console.error("error", error);
         return NextResponse.json({error: "Something went wrong!"}, {status: 500})
     }
 }

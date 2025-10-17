@@ -7,7 +7,6 @@ async function updateChatTitles() {
   const chats = await prisma.chat.findMany({
     where: {
       OR: [
-        { title: null },
         { title: '' },
         { title: 'New Chat' }
       ]
@@ -34,8 +33,7 @@ async function updateChatTitles() {
         updatedAt: chat.updatedAt || new Date()
       }
     });
-    
-    console.log(`Updated chat ${chat.id} with title: ${title}`);
+  
   }
 }
 

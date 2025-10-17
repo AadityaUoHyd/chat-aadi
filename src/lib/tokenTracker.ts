@@ -14,7 +14,6 @@ export async function getTodayTokens(userId: string, chatId?: string) {
   const today = startOfDay(new Date());
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
-    console.log("User id", userId)
   const result = await prisma.tokenUsage.aggregate({
     _sum: { token: true },
     where: {
@@ -43,7 +42,6 @@ export async function addUserTokens(userId: string, tokensUsed: number, chatId: 
   const existing = await prisma.tokenUsage.findFirst({
     where: { userId, chatId, createdAt: { gte: today } },
   });
-  console.log(existing);
   if (existing) {
     await prisma.tokenUsage.update({
       where: { id: existing.id },

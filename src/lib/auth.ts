@@ -2,7 +2,8 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "@/lib/prisma";
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, User } from "next-auth";
+import { AdapterUser } from "next-auth/adapters";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
@@ -49,14 +50,73 @@ export const authOptions: NextAuthOptions = {
         strategy: "jwt"
     },
     callbacks: {
-        async jwt({ token, user }: any) {
+        async signIn({ user, account, profile }) {
+            // Handle Google OAuth sign-in
+            if (account?.provider === 'google') {
+                try {
+                    // Check if user already exists with this email
+                    const existingUser = await prisma.user.findUnique({
+                        where: { email: user.email! }
+                    });
+
+                    // If user exists but doesn't have a Google account linked
+                    if (existingUser) {
+                        const existingAccount = await prisma.account.findFirst({
+                            where: {
+                                userId: existingUser.id,
+                                provider: 'google'
+                            }
+                        });
+
+                        if (!existingAccount) {
+                            // Link the Google account to the existing user
+                            await prisma.account.create({
+                                data: {
+                                    userId: existingUser.id,
+                                    type: 'oauth',
+                                    provider: 'google',
+                                    providerAccountId: account.providerAccountId,
+                                    access_token: account.access_token,
+                                    refresh_token: account.refresh_token,
+                                    expires_at: account.expires_at,
+                                    token_type: account.token_type,
+                                    scope: account.scope,
+                                    id_token: account.id_token,
+                                }
+                            });
+                        }
+                        
+                        // Update user with Google account info if needed
+                        if (!existingUser.image || !existingUser.name) {
+                            await prisma.user.update({
+                                where: { id: existingUser.id },
+                                data: {
+                                    name: user.name || existingUser.name,
+                                    image: user.image || existingUser.image,
+                                    emailVerified: new Date()
+                                }
+                            });
+                        }
+                        
+                        // Update the user object to match the existing user
+                        user.id = existingUser.id;
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error in Google OAuth sign-in:', error);
+                    return false;
+                }
+            }
+            return true;
+        },
+        async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
             }
             return token;
         },
-        async session({ session, token }: any) {
-            if (token) {
+        async session({ session, token }) {
+            if (token && session.user) {
                 session.user.id = token.id as string;
             }
             return session;

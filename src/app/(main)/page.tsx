@@ -8,13 +8,11 @@ export default function MainPage() {
 
     const checkTokens = async() => {
         const data = await axios.get("/api/chat/limit");
-        console.log(data);
     }
 
     const sendPrompt = async (prompt: String) => {
         const newChat = await axios.post("/api/chat/create", { prompt: prompt });
 
-        console.log(newChat);
         if(newChat.status === 200){
             router.push(`/c/${newChat.data.chatId}`);
         }

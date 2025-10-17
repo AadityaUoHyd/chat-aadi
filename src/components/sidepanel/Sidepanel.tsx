@@ -181,51 +181,64 @@ export default function Sidepanel({ currentChatId }: SidepanelProps) {
                 </div>
             </div>
 
-
             </div>
 
-            <div className="sticky bottom-0 bg-gray-50 flex-0 inset-0 mt-auto border-t border-gray-200 p-2">
-                <div className="flex items-center justify-between">
-                    <div className="flex gap-2 items-center">
-                        <div className="rounded-[100%] w-7 h-7 bg-blue-400 text-white flex items-center justify-center flex-shrink-0">
-                            <User2 className="w-4 h-4" />
-                        </div>
-                        <div className={clsx("flex flex-col gap-.5 flex-shrink-0 relative", {
-                            "hidden": collapsed
-                        })}>
-                            <div 
-                                className="flex items-center gap-1 cursor-pointer group"
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            >
-                                <span className="text-sm text-gray-800 group-hover:text-gray-600">
-                                    {session?.user?.email || 'User'}
-                                </span>
-                                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                            </div>
-                            <div className="flex items-center gap-2 py-1">
-                                <span className="text-xs text-gray-500 semibold">Free</span>
-                                <button className="px-2 py-1 bg-white rounded-2xl border border-gray-300 outline-0 text-xs font-medium cursor-pointer">Upgrade</button>
-                            </div>
-                            {isDropdownOpen && (
-                                <div className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                    >
-                                        <LogOut className="w-4 h-4" />
-                                        Log out
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <div className={clsx("pr-2", {
-                        "hidden": collapsed
-                    })}>
-                        
-                    </div>
-                </div>
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-3">
+  <div className="flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <div className="shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center text-white shadow-sm">
+        <User2 className="w-4 h-4" />
+      </div>
+      
+      {!collapsed && (
+        <div className="relative">
+          <div 
+            className="group flex items-center gap-1.5 cursor-pointer py-1"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            <span className="text-sm font-medium text-gray-800 group-hover:text-gray-600 transition-colors">
+              {session?.user?.name || session?.user?.email || 'User'}
+            </span>
+            <ChevronDown 
+              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                isDropdownOpen ? 'rotate-180' : ''
+              }`} 
+            />
+          </div>
+
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-xs font-medium text-gray-500">Free Plan</span>
+            <button 
+              className="px-2.5 py-1 bg-white rounded-full border border-gray-200 text-xs font-medium 
+                        hover:bg-gray-50 active:bg-gray-100 transition-colors shadow-sm"
+            >
+              Upgrade
+            </button>
+          </div>
+
+          {isDropdownOpen && (
+            <div className="absolute bottom-full left-0 mb-2 w-56 bg-white rounded-lg shadow-lg py-1.5 z-10 border border-gray-100">
+              <button
+                onClick={handleLogout}
+                className="w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-red-300 
+                          flex items-center gap-2.5 transition-colors"
+              >
+                <LogOut className="w-4 h-4 text-gray-500" />
+                <span>Sign out</span>
+              </button>
             </div>
+          )}
+        </div>
+      )}
+    </div>
+
+    {!collapsed && (
+      <div className="pr-1">
+        {/* Additional actions can go here */}
+      </div>
+    )}
+  </div>
+</div>
 
         </div>
     )

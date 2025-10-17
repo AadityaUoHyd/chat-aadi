@@ -23,12 +23,10 @@ async function getAIProvider(): Promise<AIProvider> {
         signal: AbortSignal.timeout(1000) 
       });
       if (response.ok) {
-        console.log("Using local Ollama provider");
         return "ollama";
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.log("Ollama not available, falling back to Mistral:", errorMessage);
     }
   }
   
@@ -37,7 +35,6 @@ async function getAIProvider(): Promise<AIProvider> {
     throw new Error("MISTRAL_API_KEY is not set in environment variables");
   }
   
-  console.log("Using Mistral AI provider");
   return "mistral";
 }
 
@@ -50,12 +47,10 @@ const mistralClient = new OpenAI({
 // Helper: unified chat completion
 async function createChatCompletion(messages: any[], options: any = {}) {
   const provider = await getAIProvider();
-  console.log(`Using ${provider} for chat completion`);
   
   try {
     if (provider === "ollama") {
       const prompt = messages.map((m) => `${m.role}: ${m.content}`).join("\n");
-      console.log("Sending to Ollama:", { prompt, options });
       
       const response = await fetch(OLLAMA_URL, {
         method: "POST",
@@ -83,20 +78,16 @@ async function createChatCompletion(messages: any[], options: any = {}) {
         return response;
       } else {
         const data = await response.json();
-        console.log("Ollama response:", data);
+        
         return data;
       }
     } else {
       // Using Mistral
-      console.log("Sending to Mistral:", { messages, options });
-      
       const completion = await mistralClient.chat.completions.create({
         model: options.model || "mistral-tiny",
         messages,
         ...options
       });
-      
-      console.log("Mistral response:", completion);
       return completion;
     }
   } catch (error) {
@@ -104,7 +95,6 @@ async function createChatCompletion(messages: any[], options: any = {}) {
     
     // If we were using Ollama and it failed, try falling back to Mistral
     if (provider === "ollama") {
-      console.log("Ollama failed, falling back to Mistral");
       return createChatCompletion(messages, { ...options, forceMistral: true });
     }
     
@@ -323,7 +313,6 @@ Always respond in clean, well-structured **Markdown**.
 
               // Save the assistant's message to the database
               try {
-                console.log("Attempting to save assistant message to database...");
                 const savedMessage = await prisma.message.create({
                   data: { 
                     chatId, 
@@ -331,7 +320,6 @@ Always respond in clean, well-structured **Markdown**.
                     content: assistantMessage 
                   },
                 });
-                console.log("Successfully saved assistant message:", savedMessage);
               } catch (dbError) {
                 console.error("Database save error:", dbError);
                 throw dbError; // Re-throw to be caught by the outer catch
@@ -409,19 +397,15 @@ Always respond in clean, well-structured **Markdown**.
 
 // ---------------- Generate Chat Title ----------------
 async function generateChatTitle(userMessage: string, chatId: string) {
-  console.log("Generating chat title for message:", userMessage);
   
   try {
     const provider = await getAIProvider();
     let rawTitle = "New Chat";
 
     if (provider === "ollama") {
-      console.log("Using Ollama for title generation");
       
       const prompt = `Generate a short and clear chat title (max 6 words, no quotes or punctuation) for the following message:
       "${userMessage}"`;
-      
-      console.log("Sending to Ollama for title:", { prompt });
       
       const response = await fetch(process.env.OLLAMA_URL || 'http://localhost:11434/api/generate', {
         method: "POST",
@@ -443,11 +427,9 @@ async function generateChatTitle(userMessage: string, chatId: string) {
       }
 
       const data = await response.json();
-      console.log("Title generation response:", data);
       
       rawTitle = data.response?.trim() || "New Chat";
     } else {
-      console.log("Using OpenAI for title generation");
       
       const completion = await createChatCompletion(
         [
@@ -467,12 +449,10 @@ async function generateChatTitle(userMessage: string, chatId: string) {
         }
       );
       
-      console.log("Title generation completion:", completion);
       rawTitle = completion.choices[0]?.message?.content?.trim() || "New Chat";
     }
 
     const cleanTitle = rawTitle.replace(/["'.!?]/g, "").trim();
-    console.log("Generated chat title:", cleanTitle);
 
     await prisma.chat.update({
       where: { id: chatId },

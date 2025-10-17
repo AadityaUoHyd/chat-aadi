@@ -10,7 +10,6 @@ type Chat = {
 
 const fetcher = async (url: string, options?: RequestInit) => {
   try {
-    console.log(`Fetching ${url}`, { options });
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -64,8 +63,6 @@ export const onErrorRetry = (error: any, key: string, config: any, revalidate: a
     if (!chatId) {
       throw new Error('Chat ID is required');
     }
-
-    console.log('Deleting chat:', chatId);
     
     try {
       // Optimistically update the UI
@@ -153,7 +150,6 @@ export function useChats() {
         
         // If we get a 404, the chat was likely deleted
         if (error.status === 404) {
-          console.log('Chat not found, stopping polling');
           onError?.(new Error('Chat not found'));
           stopPolling();
           return;
