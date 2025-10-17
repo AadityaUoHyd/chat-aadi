@@ -352,7 +352,7 @@ Always respond in clean, well-structured **Markdown**.
     } else {
       // Mistral streaming
       const completion: any = await createChatCompletion(messages, {
-        model: "gpt-4o-mini",
+        model: "mistral-tiny",
         stream: true,
         temperature: 0.7,
       });
