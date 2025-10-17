@@ -50,18 +50,17 @@ export default function Login() {
 
   return (
     <div>
-      <header className="p-4 text-2xl font-bold">ChatAadi</header>
-      <div className="max-w-xs m-auto text-center mt-8">
-        <div className="flex justify-center mb-6">
+      <div className="max-w-xs m-auto text-center m-4">
+        <div className="flex justify-center">
                             <img
-                                src="/chatAadi.png"
+                                src="https://raw.githubusercontent.com/AadityaUoHyd/chat-aadi/refs/heads/main/screenshots/chatAadi.png"
                                 alt="Chat Aadi"
                                 className="w-full h-full"
                             />
         </div>
         <h1 className="text-3xl font-semibold">Log in or sign up</h1>
         <p className="text-gray-500 mt-3 text-sm leading-5">
-          You'll get smarter responses and can upload files, images and more.
+          ChatAadi - Your Own AI Chatbot Assistant
         </p>
 
         <div className="mt-7">
@@ -134,7 +133,7 @@ export default function Login() {
           </p>
         </div>
       </div>
-      <div className="flex justify-center gap-4 mt-6">
+      <div className="flex justify-center gap-4 m-4">
         <Link href="/terms" className="text-sm text-gray-600 hover:underline">
           Terms of Use
         </Link>

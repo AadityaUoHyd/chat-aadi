@@ -72,11 +72,10 @@ export default function RegisterPage() {
 
   return (
     <div>
-      <header className="p-4 text-2xl font-bold">ChatAadi</header>
-      <div className="max-w-xs m-auto text-center mt-8">
-          <div className="flex justify-center mb-6">
+      <div className="max-w-xs m-auto text-center m-4">
+          <div className="flex justify-center">
                             <img
-                                src="/chatAadi.png"
+                                src="https://raw.githubusercontent.com/AadityaUoHyd/chat-aadi/refs/heads/main/screenshots/chatAadi.png"
                                 alt="Chat Aadi"
                                 className="w-full h-full"
                             />
@@ -167,7 +166,7 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
-      <div className="flex justify-center gap-4 mt-6">
+      <div className="flex justify-center gap-4 m-4">
         <Link href="/terms" className="text-sm text-gray-600 hover:underline">
           Terms of Use
         </Link>
