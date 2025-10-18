@@ -226,7 +226,6 @@ This project is licensed under the [MIT License](./LICENSE).
 
 ### Major Pending Task
 - Generating text to image and image to image like Ghibli images (say using stability.ai api)
-- Page "Loading..." to logo rotate symbol
 - subscription monthly implementation with razorpay and token spent
 - forgot/reset password & email verification with otp
 - ollama not working.

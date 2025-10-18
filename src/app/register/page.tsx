@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function RegisterForm() {
@@ -185,7 +186,7 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="p-4">Loading...</div>}>
+    <Suspense fallback={<LoadingSpinner />}>
       <RegisterForm />
     </Suspense>
   );

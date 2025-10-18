@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { signIn, useSession } from "next-auth/react";
 import { redirect, useSearchParams } from "next/navigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -15,7 +16,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
-  if (status === "loading") return <p className="p-4">Loading...</p>;
+  if (status === "loading") return <LoadingSpinner />;
   if (session?.user) return redirect(callbackUrl);
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -1,11 +1,13 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import dynamic from 'next/dynamic';
 import { Settings, User2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation'; 
 
 const Header = dynamic(() => import('@/components/header/Header'), {
   ssr: false
@@ -52,11 +54,7 @@ export default function ProfilePage() {
   }, [session, status]);
 
   if (!isClient || isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (status !== 'authenticated' || !session?.user) {
