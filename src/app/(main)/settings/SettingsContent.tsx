@@ -2,10 +2,22 @@
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { LogOut, Trash2, User2 } from 'lucide-react';
+import { AlertCircle, LogOut, Trash2, User2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'next-auth/react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 export function SettingsContent() {
   const router = useRouter();
@@ -15,6 +27,31 @@ export function SettingsContent() {
   const { data: session } = useSession();
   const [notifications, setNotifications] = useState(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    
+
+    try {
+      setIsDeleting(true);
+      const response = await fetch('/api/user/delete', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete account');
+      }
+
+      // Sign out after successful deletion
+      await signOut({ callbackUrl: '/register' });
+      
+      toast.success('Your account has been successfully deleted.');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Failed to delete account. Please try again.');
+      setIsDeleting(false);
+    }
+  };
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: '/login' });
@@ -111,13 +148,47 @@ export function SettingsContent() {
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
           </Button>
-          <Button 
-            variant="outline" 
-            className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete Account
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                disabled={isDeleting}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {isDeleting ? 'Deleting...' : 'Delete Account'}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                  <AlertDialogTitle>Delete Account</AlertDialogTitle>
+                </div>
+                <div className="pt-4">
+                  <AlertDialogDescription asChild>
+                    <span className="block font-medium text-red-600">Warning: This action cannot be undone.</span>
+                  </AlertDialogDescription>
+                  <AlertDialogDescription asChild>
+                    <span className="block mt-2">
+                      All your data, including your profile, chats, and messages, will be permanently deleted.
+                      You will be logged out and redirected to the registration page.
+                    </span>
+                  </AlertDialogDescription>
+                </div>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting}
+                  className="bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete My Account'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </section>
     </div>

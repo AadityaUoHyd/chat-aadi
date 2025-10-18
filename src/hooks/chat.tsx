@@ -72,8 +72,6 @@ export const deleteChat = async (chatId: string): Promise<boolean> => {
     throw new Error('Invalid chat ID');
   }
 
-  console.log('Deleting chat with ID:', chatId);
-
   // Optimistically update the UI
   const currentChats = await mutate<Chat[]>(
     "/api/chat",
@@ -98,8 +96,6 @@ export const deleteChat = async (chatId: string): Promise<boolean> => {
       },
       credentials: 'same-origin',
     });
-
-    console.log('Delete response status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
