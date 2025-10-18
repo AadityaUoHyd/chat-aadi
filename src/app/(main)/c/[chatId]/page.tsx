@@ -197,42 +197,62 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
                   // Handle paragraphs
                   p: ({ node, children, ...props }) => {
                     // Check if the paragraph only contains a single code block
-                    const hasPre = React.Children.toArray(children).some(
+                    const childrenArray = React.Children.toArray(children);
+                    const hasPre = childrenArray.some(
                       (child) => React.isValidElement(child) && child.type === 'pre'
                     );
                     
                     if (hasPre) {
-                      return <div {...props}>{children}</div>;
+                      return <div className="my-4">{children}</div>;
                     }
-                    return <p {...props}>{children}</p>;
+                    
+                    // Check if the paragraph is empty or only contains whitespace
+                    const isEmpty = childrenArray.every(
+                      (child) => typeof child === 'string' && child.trim() === ''
+                    );
+                    
+                    if (isEmpty) {
+                      return null; // Skip rendering empty paragraphs
+                    }
+                    
+                    return <p className="my-4" {...props}>{children}</p>;
+                  },
+                  // Handle code blocks
+                  pre: ({ node, children, ...props }) => {
+                    return <div className="my-4">{children}</div>;
                   },
                   code({ node, inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || '');
                     const language = match ? match[1] : 'plaintext';
                     const codeContent = String(children).replace(/\n$/, '');
                     
-                    return !inline ? (
-                      <div className="relative">
-                        <div className="flex items-center justify-between px-4 py-1 text-xs text-gray-400 bg-gray-800 rounded-t-md">
+                    if (inline) {
+                      return (
+                        <code className={`${className} bg-gray-100 px-1.5 py-0.5 rounded`} {...props}>
+                          {children}
+                        </code>
+                      );
+                    }
+                    
+                    return (
+                      <div className="relative my-4 rounded-md overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-1 text-xs text-gray-400 bg-gray-800">
                           <span>{language}</span>
                           <CopyButton content={codeContent} />
                         </div>
-                        <pre className="!m-0 !p-0">
+                        <pre className="!m-0 !p-0 !bg-gray-900">
                           <code
-                            className={`${className} !p-4 !bg-gray-900 !text-gray-100 !rounded-t-none`}
+                            className={`${className} !p-4 !bg-gray-900 !text-gray-100 block overflow-x-auto`}
                             {...props}
                           >
                             {children}
                           </code>
                         </pre>
                       </div>
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
                     );
                   },
                 }}
+                skipHtml
               >
                 {msg.content}
               </ReactMarkdown>
