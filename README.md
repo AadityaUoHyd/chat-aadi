@@ -4,7 +4,11 @@
 
 ChatAadi is a full-stack AI chatbot application, for general purpose conversation, inspired by ChatGPT. It features Google-based authentication, persistent chat history, and token tracking – built with modern web technologies.
 
+- In localhost
 ![](screenshots/chatAadiPage.png)
+
+- In live deploy
+![](screenshots/chatAadiPageLive.png)
 
 ## 🚀 Tech Stack
 
