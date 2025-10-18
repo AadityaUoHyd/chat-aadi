@@ -234,12 +234,20 @@ This project is licensed under the [MIT License](./LICENSE).
 ```
 NEXT_PUBLIC_ALLOWED_ORIGINS=http://localhost:3000,https://chat-aadi.vercel.app
 ```
+- Add .nvmrc file with 18 (for NodeJs version)
+- Add .vercelignore file
 - During build need 
 ```
 npm i
 npx prisma generate (to generate prisma client)
 npm run build
 npm run start
+```
+- Under "Build & Development Settings":
+```
+Set "Build Command" to: npm run vercel-build
+Set "Output Directory" to: .next
+Set "Install Command" to: npm install
 ```
 - In case it got deployed, find it live here:
 - https://chat-aadi.vercel.app
