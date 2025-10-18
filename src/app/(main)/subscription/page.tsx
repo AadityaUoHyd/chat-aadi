@@ -1,5 +1,3 @@
-// app/subscription/page.tsx or components/SubscriptionPage.tsx
-
 'use client';
 
 import { useState } from 'react';
@@ -9,10 +7,11 @@ export default function SubscriptionPage() {
   const [selectedModel, setSelectedModel] = useState('mistral-tiny');
 
   const modelBasedPrices: Record<string, { Pro: number; Business: number }> = {
-    'mistral-tiny': { Pro: 500, Business: 1200 },
     'qwen-7b': { Pro: 700, Business: 1400 },
-    'GPT-4': { Pro: 1000, Business: 2000 },
-    'llama3.2': { Pro: 600, Business: 1300 },
+    'gpt-4-turbo': { Pro: 1000, Business: 2000 },
+    'grok-4': { Pro: 1200, Business: 2500 },
+    'deepseek-v3.1': { Pro: 300, Business: 800 },
+    'llama-3-8b': { Pro: 600, Business: 1300 },
     'claude-3-5-sonnet': { Pro: 900, Business: 1800 },
     'gemini-2.0-flash': { Pro: 800, Business: 1600 },
   };
@@ -26,6 +25,7 @@ export default function SubscriptionPage() {
         'Basic access to ChatAadi',
         'Limited message history',
         'Access to open models',
+        'mistral-tiny model only',
       ],
       buttonText: 'Your Current Plan',
       buttonVariant: 'outline',
@@ -97,14 +97,30 @@ export default function SubscriptionPage() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="text-center mb-16">
-        <h1 className="text-4xl font-extrabold mb-4 text-gray-800">Choose the Perfect Plan</h1>
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-extrabold mb-3 text-gray-900">Choose the Perfect Plan</h1>
         <p className="text-gray-600 max-w-xl mx-auto text-lg">
           Start for free, scale as you grow. No hidden fees, cancel anytime.
         </p>
-        <p className="mt-4 text-sm text-gray-500">
-          Selected Model: <strong>{selectedModel}</strong>
-        </p>
+
+        {/* Model Dropdown */}
+        <div className="mt-6">
+          <label htmlFor="model" className="block text-sm font-medium text-gray-700 mb-1">
+            Select AI Model
+          </label>
+          <select
+            id="model"
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            className="mt-1 block w-60 mx-auto px-4 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-[#5d5bd0] focus:border-[#5d5bd0]"
+          >
+            {Object.keys(modelBasedPrices).map((model) => (
+              <option key={model} value={model}>
+                {model}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Plans */}
@@ -112,7 +128,7 @@ export default function SubscriptionPage() {
         {plans.map((plan, index) => (
           <div
             key={index}
-            className={`relative rounded-2xl shadow-sm p-8 transition-all duration-300 border ${
+            className={`relative rounded-2xl p-8 transition-all duration-300 border shadow-sm ${
               plan.popular
                 ? 'border-[#5d5bd0] ring-2 ring-[#5d5bd0] bg-gradient-to-br from-[#f5f4ff] to-white'
                 : 'border-gray-200 bg-white hover:shadow-lg'
@@ -127,16 +143,14 @@ export default function SubscriptionPage() {
             )}
 
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-1 text-gray-800">{plan.name}</h2>
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">{plan.name}</h2>
               <div className="flex items-baseline justify-center space-x-1">
                 <span className="text-5xl font-extrabold text-gray-900">{plan.price}</span>
-                <span className="text-gray-500 text-lg">
-                  {plan.period === 'forever' ? '' : '/'}{plan.period}
-                </span>
+                <span className="text-gray-500 text-lg">{plan.period === 'forever' ? '' : `/${plan.period}`}</span>
               </div>
             </div>
 
-            <ul className="space-y-4 mb-10 text-gray-700">
+            <ul className="space-y-4 mb-8 text-gray-700">
               {plan.features.map((feature, i) => (
                 <li key={i} className="flex items-start">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-1" />
@@ -160,9 +174,7 @@ export default function SubscriptionPage() {
 
       {/* FAQ Section */}
       <div className="mt-20 bg-gray-50 p-8 rounded-2xl shadow-sm">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-          Frequently Asked Questions
-        </h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Frequently Asked Questions</h2>
         <div className="space-y-6 max-w-3xl mx-auto">
           {faqs.map((faq, i) => (
             <div key={i} className="border-b pb-4">

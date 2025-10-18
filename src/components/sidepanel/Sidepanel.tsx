@@ -249,6 +249,13 @@ export default function Sidepanel({ currentChatId }: SidepanelProps) {
           Profile
         </Link>
         <Link
+          href="/settings"
+          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          onClick={() => setIsDropdownOpen(false)}
+        >
+          Settings
+        </Link>
+        <Link
           href="/billing"
           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
           onClick={() => setIsDropdownOpen(false)}

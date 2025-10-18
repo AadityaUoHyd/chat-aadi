@@ -4,12 +4,24 @@ import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { LogOut, Trash2, User2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 
 export default function SettingsPage() {
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialModel = searchParams.get('model') || 'mistral-tiny';
+  const [modelPreference, setModelPreference] = useState(initialModel);
+
   const { data: session, status } = useSession();
   const [notifications, setNotifications] = useState(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [modelPreference, setModelPreference] = useState('GPT-4');
+  //const [modelPreference, setModelPreference] = useState('mistral-tiny');
+
+  const handleLogout = async () => {
+      await signOut({ callbackUrl: '/login' });
+    };
 
   if (status === 'loading') {
     return <div>Loading...</div>;
@@ -19,7 +31,7 @@ export default function SettingsPage() {
     return <div>Please sign in to view settings</div>;
   }
 
-  const models = ['mistral-tiny', 'qwen-7b', 'GPT-4', 'llama3.2', 'claude-3-5-sonnet', 'gemini-2.0-flash'];
+  const models = ['mistral-tiny (free)', 'qwen-7b', 'gpt-4-turbo', 'deepseek-v3.1', 'grok-4', 'llama-3-8b', 'claude-3-5-sonnet', 'gemini-2.0-flash'];
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4">
@@ -33,17 +45,22 @@ export default function SettingsPage() {
             Default AI Model
           </label>
           <select
-            id="model"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-            value={modelPreference}
-            onChange={(e) => setModelPreference(e.target.value)}
-          >
-            {models.map((model) => (
-              <option key={model} value={model}>
-                {model}
-              </option>
-            ))}
-          </select>
+      id="model"
+      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+      value={modelPreference}
+      onChange={(e) => {
+        const newModel = e.target.value;
+        setModelPreference(newModel);
+        router.replace(`/settings?model=${newModel}`);
+      }}
+    >
+      {models.map((model) => (
+        <option key={model} value={model}>
+          {model}
+        </option>
+      ))}
+    </select>
+
         </div>
       </section>
 
@@ -107,7 +124,8 @@ export default function SettingsPage() {
             <Trash2 className="w-4 h-4 mr-2" />
             Delete Account
           </Button>
-          <Button variant="outline" className="text-gray-600 hover:bg-gray-100">
+          <Button variant="outline" onClick={handleLogout}
+            className="text-gray-600 hover:bg-red-200">
             <LogOut className="w-4 h-4 mr-2" />
             Log Out
           </Button>

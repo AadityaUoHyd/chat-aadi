@@ -220,12 +220,24 @@ This project is licensed under the [MIT License](./LICENSE).
 
 ---
 
-### Vercel Deployment
-- Enusre next.config.ts has 
-```
-{ key: 'Access-Control-Allow-Origin', value: 'https://chat-aadi.vercel.app' }, 
-and not http://localhost:3000
+### Major Pending Task
+- Generating text to image and image to image like Ghibli images (say using stability.ai api)
+- Page "Loading..." to logo rotate symbol
+- subscription monthly implementation with razorpay and token spent
+- forgot/reset password & email verification with otp
+- vercel deploy
 
+### Vercel Deployment
+- Ensure .env file. It must also have CORS as,
+```
+NEXT_PUBLIC_ALLOWED_ORIGINS=http://localhost:3000,https://chat-aadi.vercel.app
+```
+- During build need 
+```
+npm i
+npx prisma generate (to generate prisma client)
+npm run build
+npm run start
 ```
 - In case it got deployed, find it live here:
 - https://chat-aadi.vercel.app

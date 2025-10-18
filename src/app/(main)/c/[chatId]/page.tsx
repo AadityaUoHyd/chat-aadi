@@ -1,7 +1,6 @@
 "use client";
 import ChatInput from "@/components/chatinput/chatinput";
-import { use } from "react";
-import { useEffect, useState, useRef, useCallback } from "react";
+import React, { use, useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from "rehype-highlight";
@@ -193,29 +192,44 @@ export default function ChatPage({ params }: { params: Promise<{ chatId: string 
               )}
               <ReactMarkdown
                 rehypePlugins={[rehypeHighlight as any]}
-                className="prose break-words"
+                className="prose break-words max-w-none"
                 components={{
-                  code({ node, inline, className, children, ...props }) {
-                    if (inline) {
-                      // Inline code
-                      return (
-                        <code className="bg-gray-200 text-gray-800 px-1 rounded">
-                          {children}
-                        </code>
-                      );
+                  // Handle paragraphs
+                  p: ({ node, children, ...props }) => {
+                    // Check if the paragraph only contains a single code block
+                    const hasPre = React.Children.toArray(children).some(
+                      (child) => React.isValidElement(child) && child.type === 'pre'
+                    );
+                    
+                    if (hasPre) {
+                      return <div {...props}>{children}</div>;
                     }
-
-                    // Block code
-                    return (
-                      <pre className="text-white py-4 rounded-lg overflow-x-auto">
-                        <code 
-                          className={`${className} font-mono`} 
-                          style={{background: "#F4F4F5", color: "#000"}}
-                          {...props}
-                        >
-                          {children}
-                        </code>
-                      </pre>
+                    return <p {...props}>{children}</p>;
+                  },
+                  code({ node, inline, className, children, ...props }: any) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    const language = match ? match[1] : 'plaintext';
+                    const codeContent = String(children).replace(/\n$/, '');
+                    
+                    return !inline ? (
+                      <div className="relative">
+                        <div className="flex items-center justify-between px-4 py-1 text-xs text-gray-400 bg-gray-800 rounded-t-md">
+                          <span>{language}</span>
+                          <CopyButton content={codeContent} />
+                        </div>
+                        <pre className="!m-0 !p-0">
+                          <code
+                            className={`${className} !p-4 !bg-gray-900 !text-gray-100 !rounded-t-none`}
+                            {...props}
+                          >
+                            {children}
+                          </code>
+                        </pre>
+                      </div>
+                    ) : (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
                     );
                   },
                 }}
