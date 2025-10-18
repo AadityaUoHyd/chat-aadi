@@ -12,93 +12,200 @@ const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434/api/generat
 type AIProvider = "ollama" | "mistral";
 
 // Helper: select AI client with fallback logic
-async function getAIProvider(): Promise<AIProvider> {
-  // Always try Ollama first if not explicitly disabled
+async function getAIProvider(forceMistral = false): Promise<AIProvider> {
+  // If Mistral is forced (e.g., after an Ollama failure), use it
+  if (forceMistral) {
+    if (!process.env.MISTRAL_API_KEY) {
+      throw new Error("MISTRAL_API_KEY is not set in environment variables");
+    }
+    return "mistral";
+  }
+
+  // Try Ollama first if not explicitly disabled
   if (process.env.DISABLE_OLLAMA !== 'true') {
     try {
-      // Test if Ollama is available
+      // Test if Ollama is available with a short timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+      
       const response = await fetch(process.env.OLLAMA_URL || 'http://localhost:11434/api/tags', { 
         method: 'GET',
-        // Add a short timeout to prevent hanging
-        signal: AbortSignal.timeout(1000) 
-      });
+        signal: controller.signal
+      }).finally(() => clearTimeout(timeoutId));
+      
       if (response.ok) {
-        return "ollama";
+        const data = await response.json().catch(() => ({}));
+        // Check if llama3.2 is available in the models list
+        const hasLlamaModel = data.models?.some((model: any) => 
+          model.name?.includes('llama3.2') || 
+          model.name?.includes('llama3') ||
+          model.model?.includes('llama3.2') ||
+          model.model?.includes('llama3')
+        );
+        
+        if (hasLlamaModel) {
+          return "ollama";
+        }
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn("Ollama not available, falling back to Mistral:", 
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
   
-  // Fall back to Mistral if Ollama is not available or explicitly disabled
+  // Fall back to Mistral if Ollama is not available, disabled, or failed
   if (!process.env.MISTRAL_API_KEY) {
-    throw new Error("MISTRAL_API_KEY is not set in environment variables");
+    throw new Error("Neither Ollama is available nor MISTRAL_API_KEY is set. Please ensure at least one AI provider is properly configured.");
   }
   
   return "mistral";
 }
 
-// Initialize Mistral client
+// Initialize Mistral client with custom endpoint if provided
 const mistralClient = new OpenAI({
   apiKey: process.env.MISTRAL_API_KEY,
-  baseURL: 'https://api.mistral.ai/v1',
+  baseURL: process.env.MISTRAL_API_URL || 'https://api.mistral.ai/v1',
 });
 
 // Helper: unified chat completion
 async function createChatCompletion(messages: any[], options: any = {}) {
-  const provider = await getAIProvider();
+  // Always try Ollama first in development, Mistral in production
+  const isLocal = process.env.NODE_ENV === 'development';
+  const provider = isLocal ? 'ollama' : await getAIProvider();
   
   try {
     if (provider === "ollama") {
-      const prompt = messages.map((m) => `${m.role}: ${m.content}`).join("\n");
-      
-      const response = await fetch(OLLAMA_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          model: "llama3.2",
-          prompt, 
-          stream: options.stream || false,
-          ...options 
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Ollama API error:", {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorText
-        });
-        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
-      }
-
-      if (options.stream) {
-        // For streaming responses, return the raw response
-        return response;
-      } else {
-        const data = await response.json();
+      try {
+        // Format messages for Ollama's API
+        const prompt = messages.map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join("\n");
         
-        return data;
+        const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434/api/generate';
+        console.log(`Calling Ollama API at: ${ollamaUrl}`);
+        
+        if (!process.env.OLLAMA_MODEL) {
+          throw new Error('OLLAMA_MODEL is not set in environment variables');
+        }
+        console.log(`Using Ollama model: ${process.env.OLLAMA_MODEL}`);
+        
+        const response = await fetch(ollamaUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            model: process.env.OLLAMA_MODEL,
+            prompt,
+            stream: options.stream || false,
+            ...options
+          }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'No error details');
+          console.error('Ollama API error, falling back to Mistral');
+          console.error(`Ollama API error (${response.status}): ${errorText}`);
+          
+          // If we get a 404, it means the model doesn't exist
+          if (response.status === 404) {
+            console.error(`Model '${process.env.OLLAMA_MODEL}' not found. Please make sure it's installed with 'ollama pull ${process.env.OLLAMA_MODEL}'`);
+          }
+          
+          // Throw to trigger the Mistral fallback
+          throw new Error('Ollama API request failed');
+        }
+
+        if (options.stream) {
+          return response;
+        } else {
+          // For non-streaming, parse the response
+          const responseData = await response.json();
+          let fullResponse = '';
+          
+          // Handle different possible response formats
+          if (responseData.response !== undefined) {
+            // Format 1: Direct response field
+            fullResponse = responseData.response;
+          } else if (responseData.choices && responseData.choices[0]?.message?.content) {
+            // Format 2: OpenAI-compatible format
+            fullResponse = responseData.choices[0].message.content;
+          } else if (responseData.message?.content) {
+            // Format 3: Another common format
+            fullResponse = responseData.message.content;
+          } else {
+            console.warn('Unexpected Ollama response format:', JSON.stringify(responseData, null, 2));
+            fullResponse = 'Received an unexpected response format from the model.';
+          }
+          
+          return {
+            id: `ollama-${Date.now()}`,
+            object: 'chat.completion',
+            created: Math.floor(Date.now() / 1000),
+            model: 'llama3.2',
+            choices: [{
+              message: {
+                role: 'assistant',
+                content: fullResponse
+              },
+              finish_reason: 'stop',
+              index: 0
+            }],
+            usage: {
+              prompt_tokens: 0,
+              completion_tokens: 0,
+              total_tokens: 0
+            }
+          };
+        }
+      } catch (error) {
+        console.error('Ollama API error, falling back to Mistral:', error);
+        try {
+          console.log('Falling back to Mistral with model:', process.env.MISTRAL_MODEL || 'mistral-small');
+          return await createChatCompletionWithMistral(messages, {
+            ...options,
+            model: process.env.MISTRAL_MODEL || 'mistral-small',
+            stream: options.stream || false
+          });
+        } catch (mistralError) {
+          console.error('Mistral fallback also failed:', mistralError);
+          throw new Error('Both Ollama and Mistral APIs failed. Please check your configuration.');
+        }
       }
     } else {
-      // Using Mistral
-      const completion = await mistralClient.chat.completions.create({
-        model: options.model || "mistral-tiny",
-        messages,
-        ...options
-      });
-      return completion;
+      // Use Mistral directly if not using Ollama
+      return createChatCompletionWithMistral(messages, options);
     }
   } catch (error) {
-    console.error("Error in createChatCompletion:", error);
-    
-    // If we were using Ollama and it failed, try falling back to Mistral
-    if (provider === "ollama") {
-      return createChatCompletion(messages, { ...options, forceMistral: true });
+    console.error(`Error in createChatCompletion (${provider}):`, error);
+    throw error;
+  }
+}
+
+// Helper function to handle Mistral API calls
+async function createChatCompletionWithMistral(messages: any[], options: any = {}) {
+  try {
+    const completion = await mistralClient.chat.completions.create({
+      model: options.model || process.env.MISTRAL_MODEL || "mistral-small",
+      messages,
+      stream: options.stream || false,
+      ...options
+    });
+    return completion;
+  } catch (error) {
+    console.error("Mistral API error:", error);
+    // If using custom endpoint and it fails, try the default Mistral endpoint as last resort
+    if (process.env.MISTRAL_API_URL && process.env.MISTRAL_API_URL !== 'https://api.mistral.ai/v1') {
+      console.log("Trying default Mistral endpoint...");
+      const defaultMistralClient = new OpenAI({
+        apiKey: process.env.MISTRAL_API_KEY,
+        baseURL: 'https://api.mistral.ai/v1',
+      });
+      return await defaultMistralClient.chat.completions.create({
+        model: options.model || "mistral-tiny",
+        messages,
+        stream: options.stream || false,
+        ...options
+      });
     }
-    
-    throw error; // Re-throw if it was already a Mistral error
+    throw error;
   }
 }
 
@@ -234,24 +341,40 @@ Always respond in clean, well-structured **Markdown**.
       
       messages = [...messages, ...dbMessages];
       
+      // Check if chat exists
+      const chatExists = await prisma.chat.findUnique({
+        where: { id: currentChatId },
+        select: { id: true }
+      });
+
+      if (!chatExists) {
+        console.error(`Chat with ID ${currentChatId} not found`);
+        return new Response("Chat not found", { status: 404 });
+      }
+
       // Only save the message if it doesn't already exist
       if (!existingMessage) {
-        await prisma.message.create({
-          data: {
-            chatId: currentChatId,
-            role: 'user' as const,
-            content: userPrompt
-          },
-        });
-        
-        // Update chat's updatedAt timestamp
-        await prisma.chat.update({
-          where: { id: currentChatId },
-          data: { updatedAt: new Date() },
-        });
-        
-        // Add the new message to the conversation
-        messages.push({ role: "user" as const, content: userPrompt });
+        try {
+          await prisma.$transaction([
+            prisma.message.create({
+              data: {
+                chatId: currentChatId,
+                role: 'user' as const,
+                content: userPrompt
+              },
+            }),
+            prisma.chat.update({
+              where: { id: currentChatId },
+              data: { updatedAt: new Date() },
+            })
+          ]);
+          
+          // Add the new message to the conversation
+          messages.push({ role: "user" as const, content: userPrompt });
+        } catch (error) {
+          console.error("Error saving message:", error);
+          return new Response("Error saving message", { status: 500 });
+        }
       }
     }
 
@@ -403,34 +526,50 @@ async function generateChatTitle(userMessage: string, chatId: string) {
     let rawTitle = "New Chat";
 
     if (provider === "ollama") {
-      
-      const prompt = `Generate a short and clear chat title (max 6 words, no quotes or punctuation) for the following message:
-      "${userMessage}"`;
-      
-      const response = await fetch(process.env.OLLAMA_URL || 'http://localhost:11434/api/generate', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "mistral",
-          prompt,
-          stream: false
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Ollama title generation error:", {
-          status: response.status,
-          error: errorText
+      try {
+        const prompt = `Generate a short and clear chat title (max 6 words, no quotes or punctuation) for the following message:
+        "${userMessage}"`;
+        
+        const response = await fetch(process.env.OLLAMA_URL || 'http://localhost:11434/api/generate', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "llama3.2",
+            prompt,
+            stream: false
+          }),
         });
-        return "New Chat";
-      }
 
-      const data = await response.json();
-      
-      rawTitle = data.response?.trim() || "New Chat";
+        if (!response.ok) {
+          throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        rawTitle = data.response?.trim() || "New Chat";
+      } catch (error) {
+        console.error("Error using Ollama, falling back to Mistral:", error);
+        // Fall back to Mistral if Ollama fails
+        const completion = await createChatCompletion(
+          [
+            {
+              role: "system",
+              content: "Generate a short, descriptive title (max 6 words, no quotes or punctuation)"
+            },
+            { 
+              role: "user", 
+              content: `Create a title for this chat: ${userMessage}`
+            }
+          ],
+          { 
+            model: "mistral-tiny",
+            max_tokens: 20, 
+            temperature: 0.7 
+          }
+        );
+        rawTitle = (completion as any).choices?.[0]?.message?.content?.trim() || "New Chat";
+      }
     } else {
-      
+      // Use Mistral by default when not using Ollama
       const completion = await createChatCompletion(
         [
           {
@@ -443,13 +582,12 @@ async function generateChatTitle(userMessage: string, chatId: string) {
           }
         ],
         { 
-          model: "gpt-3.5-turbo", 
+          model: "mistral-tiny",
           max_tokens: 20, 
           temperature: 0.7 
         }
       );
-      
-      rawTitle = completion.choices[0]?.message?.content?.trim() || "New Chat";
+      rawTitle = (completion as any).choices?.[0]?.message?.content?.trim() || "New Chat";
     }
 
     const cleanTitle = rawTitle.replace(/["'.!?]/g, "").trim();

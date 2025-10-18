@@ -225,6 +225,8 @@ This project is licensed under the [MIT License](./LICENSE).
 - Page "Loading..." to logo rotate symbol
 - subscription monthly implementation with razorpay and token spent
 - forgot/reset password & email verification with otp
+- delete account
+- edit profile with image,name
 - vercel deploy
 
 ### Vercel Deployment
