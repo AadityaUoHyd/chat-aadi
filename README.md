@@ -36,7 +36,7 @@ ChatAadi is a full-stack AI chatbot application, for general purpose conversatio
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/AadityaUoHyd/chat-aadi.git
+git clone https://github.com/abchatterjee7/chat-aadi.git
 cd chat-aadi
 ````
 

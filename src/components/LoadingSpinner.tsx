@@ -5,7 +5,7 @@ export default function LoadingSpinner() {
     <div className="flex items-center justify-center p-4">
       <div className="animate-spin rounded-full h-48 w-48 border-t-2 border-b-2 border-blue-500">
         <img 
-          src="https://raw.githubusercontent.com/AadityaUoHyd/chat-aadi/refs/heads/main/screenshots/chatAadi.png" 
+          src="https://raw.githubusercontent.com/abchatterjee7/chat-aadi/refs/heads/main/screenshots/chatAadi.png" 
           alt="Loading..." 
           width={48} 
           height={48} 

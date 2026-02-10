@@ -45,7 +45,7 @@ export default function AboutPage() {
         <div className="flex items-start gap-6 flex-wrap">
           <div className="flex items-center gap-4 bg-white shadow rounded-lg p-5">
             <img
-              src="https://aadityauohyd.github.io/abc-bio/assets/img/profile-img.jpg"
+              src="https://abchatterjee7.github.io/abc-bio/assets/img/profile-img.jpg"
               alt="Aaditya B Chatterjee"
               className="w-16 h-16 rounded-full border-2 border-blue-500 object-cover"
             />
@@ -74,7 +74,7 @@ export default function AboutPage() {
             {
               icon: <Github className="w-5 h-5 text-gray-800" />,
               label: 'GitHub',
-              href: 'https://github.com/AadityaUoHyd',
+              href: 'https://github.com/abchatterjee7',
             },
             {
               icon: <Linkedin className="w-5 h-5 text-blue-600" />,
@@ -109,7 +109,7 @@ export default function AboutPage() {
             {
               icon: <Globe className="w-5 h-5 text-green-600" />,
               label: 'Resume',
-              href: 'https://aadityauohyd.github.io/abc-bio/',
+              href: 'https://abchatterjee7.github.io/abc-bio/',
             },
             {
                 icon: <Instagram className="w-5 h-5 text-red-600" />,

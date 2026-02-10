@@ -54,7 +54,7 @@ function LoginForm() {
       <div className="max-w-xs m-auto text-center m-4">
         <div className="flex justify-center">
           <img
-            src="https://raw.githubusercontent.com/AadityaUoHyd/chat-aadi/refs/heads/main/screenshots/chatAadi.png"
+            src="https://raw.githubusercontent.com/abchatterjee7/chat-aadi/refs/heads/main/screenshots/chatAadi.png"
             alt="Chat Aadi"
             className="w-full h-full"
           />
