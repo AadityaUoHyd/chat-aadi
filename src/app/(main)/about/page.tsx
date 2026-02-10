@@ -79,7 +79,7 @@ export default function AboutPage() {
             {
               icon: <Linkedin className="w-5 h-5 text-blue-600" />,
               label: 'LinkedIn',
-              href: 'https://www.linkedin.com/in/aaditya-bachchu-chatterjee-0485933b/',
+              href: 'https://www.linkedin.com/in/abchatterjee7/',
             },
             {
               icon: <Twitter className="w-5 h-5 text-sky-500" />,
